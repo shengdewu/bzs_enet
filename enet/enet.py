@@ -7,12 +7,12 @@ class enet(object):
         self._enet_block = enet_block()
         return
 
-    def building_net(self, input, batch_size, c=12, stage_two_three=1, repeat_init_block=0, skip=False):
+    def building_net(self, input, batch_size, c=12, stage_two_three=1, repeat_init_block=0, skip=False, reuse=None):
 
         inputs_shape = input.get_shape().as_list()
         input.set_shape(shape=(batch_size, inputs_shape[1], inputs_shape[2], inputs_shape[3]))
 
-        with tf.variable_scope(name_or_scope='enet'):
+        with tf.variable_scope(name_or_scope='enet', reuse=reuse):
             with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.01):
                 initial = self._enet_block.initial_block(input, scope='initial')
                 for i in range(0, repeat_init_block):
