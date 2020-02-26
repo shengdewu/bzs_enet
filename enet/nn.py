@@ -1,5 +1,6 @@
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+import numpy as np
 
 class nn(object):
     def __init__(self):
@@ -73,6 +74,38 @@ class nn(object):
 
             ret = tf.scatter_nd(indices, values, output_shape)
             return ret
+
+    @staticmethod
+    @slim.add_arg_scope
+    def median_frequency_balancing(labeles, class_num):
+        '''
+        we weight each pixel by αc = median freq/freq(c) where freq(c) is the number of pixels of class c divided by the total number of pixels in images where c is present, and median freq is the median of these frequencies
+        "number of pixels of class c": Represents the total number of pixels of class c across all images of the dataset.
+        "The total number of pixels in images where c is present": Represents the total number of pixels across all images (where there is at least one pixel of class c) of the dataset.
+        "median frequency is the median of these frequencies": Sort the frequencies calculated above and pick the median.
+        :param labeles:
+        :return:
+        '''
+        freq_class = dict()
+        for c in range(class_num):
+            freq_class[c] = list()
+
+        for l in labeles:
+            for c in range(class_num):
+                mask = np.equal(l, c).astype(np.float32)
+                freq = np.sum(mask)
+                if freq > 0:
+                    freq_class[c].append(freq)
+
+        total = 0
+        for c, freq in freq_class.items():
+            total += np.sum(freq)
+
+        for c, freq in freq_class.items():
+            
+            pass
+
+        return
 
 
 
