@@ -52,7 +52,7 @@ class lannet(object):
         decay_steps = 100
         decay_rate = 0.99
         epsilon = 0.0001
-        image_path = 'E:/workspace/TensorFlow-ENet/dataset'
+        image_path = os.getcwd() + '/dataset'
 
         train_losses, train_accuracy, train_mean_iou, train_metrics_op, train_total_images = self.produce_stream_op(image_path, batch_size, class_num=class_num)
         val_losses, val_accuracy, valmean_iou, val_metrics_op, val_total_images = self.produce_stream_op(image_path, batch_size, image_type='val', class_num=class_num, reuse=True)
