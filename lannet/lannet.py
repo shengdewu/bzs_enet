@@ -52,16 +52,17 @@ class lannet(object):
 
     def train(self, config_path):
         network_config = config.get_config(config_path)
-        decay_steps = 20
 
         train_losses, train_accuracy, train_mean_iou, train_metrics_op, train_step_num_per_epoch = self.produce_stream_op(network_config['image_path'], network_config['batch_size'], class_num=network_config['class_num'])
         val_losses, val_accuracy, valmean_iou, val_metrics_op, val_step_num_per_epoch = self.produce_stream_op(network_config['image_path'], network_config['eval_batch_size'], image_type='val', class_num=network_config['class_num'], reuse=True)
 
         global_step = tf.train.get_or_create_global_step()
+        decay_steps = network_config['num_epochs_before_decay'] * train_step_num_per_epoch
         learning_rate_dec = tf.train.exponential_decay(learning_rate=network_config['learning_rate'], global_step=global_step, decay_steps=decay_steps, decay_rate=network_config['decay_rate'], staircase=True)
         train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate_dec, epsilon=network_config['epsilon'])
         train_op = slim.learning.create_train_op(train_losses, train_optimizer)
 
+        saver = tf.train.Saver()
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             sess.run(tf.local_variables_initializer())
@@ -78,6 +79,9 @@ class lannet(object):
                         for i in range(val_step_num_per_epoch):
                             acc = sess.run(val_accuracy)
                             print('val epoch:{}-acc={}'.format(step, acc))
+                    if step % network_config['update_mode_freq'] == 0:
+                        print('save sess to {}'.format(network_config['mode_path']))
+                        saver.save(sess, network_config['mode_path'])
             except Exception as err:
                 print('{}'.format(err))
             finally:
