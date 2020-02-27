@@ -79,11 +79,16 @@ class nn(object):
     @slim.add_arg_scope
     def median_frequency_balancing(labeles, class_num):
         '''
-        we weight each pixel by αc = median freq/freq(c) where freq(c) is the number of pixels of class c divided by the total number of pixels in images where c is present, and median freq is the median of these frequencies
-        "number of pixels of class c": Represents the total number of pixels of class c across all images of the dataset.
-        "The total number of pixels in images where c is present": Represents the total number of pixels across all images (where there is at least one pixel of class c) of the dataset.
-        "median frequency is the median of these frequencies": Sort the frequencies calculated above and pick the median.
+        note: we weight each pixel by αc = median freq/freq(c)
+              where freq(c) is (the number of pixels of class c) divided by (the total number of pixels in images where c is present),
+              and (median freq is the median of these frequencies)
+
+            "the number of pixels of class c": Represents the total number of pixels of class c across all images of the dataset.
+            "The total number of pixels in images where c is present": Represents the total number of pixels across all images (where there is at least one pixel of class c) of the dataset.
+            "median frequency is the median of these frequencies": Sort the frequencies calculated above and pick the median.
+
         :param labeles:
+        :param class_num:
         :return:
         '''
         freq_class = dict()
