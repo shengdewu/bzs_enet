@@ -2,16 +2,15 @@ from enet.enet import enet
 import os
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-
+from config.config import config
 class lannet(object):
     def __init__(self):
         self._back_bone = enet()
         return
 
-
     def load_image(self, image_path, image_type='train'):
-        image_files = sorted([str('{}/{}/{}').format(image_path, image_type, file) for file in os.listdir(str('{}/{}').format(image_path, image_type))])
-        annot_image_files = sorted([str('{}/{}annot/{}').format(image_path, image_type, file)  for file in os.listdir(str('{}/{}annot').format(image_path, image_type))])
+        image_files = sorted([str('{}/{}/{}').format(image_path, image_type, file) for file in os.listdir(str('{}/{}').format(image_path, image_type)) if file.endswith('.png')])
+        annot_image_files = sorted([str('{}/{}annot/{}').format(image_path, image_type, file)  for file in os.listdir(str('{}/{}annot').format(image_path, image_type)) if file.endswith('.png')])
         return image_files, annot_image_files
 
     def preprocess(self, image, height=360, width=480, ch=3, dtype=tf.float32):
@@ -26,8 +25,8 @@ class lannet(object):
         image_tensor = tf.convert_to_tensor(image_files)
         image_annot_tensor = tf.convert_to_tensor(image_annot_files)
         image_queue = tf.train.slice_input_producer([image_tensor, image_annot_tensor])
-        pre_images = self.preprocess(tf.image.decode_png(tf.read_file(image_queue[0])), ch=3)
-        pre_images_annot = self.preprocess(tf.image.decode_png(tf.read_file(image_queue[1])), ch=1, dtype=tf.uint8)
+        pre_images = self.preprocess(tf.image.decode_image(tf.read_file(image_queue[0])), ch=3)
+        pre_images_annot = self.preprocess(tf.image.decode_image(tf.read_file(image_queue[1])), ch=1, dtype=tf.uint8)
 
         images, images_annot = tf.train.batch([pre_images, pre_images_annot], batch_size=batch_size, allow_smaller_final_batch=False)
 
@@ -43,23 +42,18 @@ class lannet(object):
         mean_iou, iou_update_op = tf.metrics.mean_iou(images_annot, predict, num_classes=class_num)
         metrics_op = tf.group(acc_update_op, iou_update_op)
 
-        return losses, accuracy, mean_iou, metrics_op, len(image_files)
+        return losses, accuracy, mean_iou, metrics_op, int(len(image_files)/batch_size)
 
-    def train(self):
-        batch_size = 10
-        class_num = 12
-        learning_rate = 0.0001
-        decay_steps = 100
-        decay_rate = 0.99
-        epsilon = 0.0001
-        image_path = os.getcwd() + '/dataset'
+    def train(self, config_path):
+        network_config = config.get_config(config_path)
+        decay_steps = 20
 
-        train_losses, train_accuracy, train_mean_iou, train_metrics_op, train_total_images = self.produce_stream_op(image_path, batch_size, class_num=class_num)
-        val_losses, val_accuracy, valmean_iou, val_metrics_op, val_total_images = self.produce_stream_op(image_path, batch_size, image_type='val', class_num=class_num, reuse=True)
+        train_losses, train_accuracy, train_mean_iou, train_metrics_op, train_step_num_per_epoch = self.produce_stream_op(network_config['image_path'], network_config['batch_size'], class_num=network_config['class_num'])
+        val_losses, val_accuracy, valmean_iou, val_metrics_op, val_step_num_per_epoch = self.produce_stream_op(network_config['image_path'], network_config['eval_batch_size'], image_type='val', class_num=network_config['class_num'], reuse=True)
 
         global_step = tf.train.get_or_create_global_step()
-        learning_rate_dec = tf.train.exponential_decay(learning_rate=learning_rate, global_step=global_step, decay_steps=decay_steps, decay_rate=decay_rate, staircase=True)
-        train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate_dec, epsilon=epsilon)
+        learning_rate_dec = tf.train.exponential_decay(learning_rate=network_config['learning_rate'], global_step=global_step, decay_steps=decay_steps, decay_rate=network_config['decay_rate'], staircase=True)
+        train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate_dec, epsilon=network_config['epsilon'])
         train_op = slim.learning.create_train_op(train_losses, train_optimizer)
 
         with tf.Session() as sess:
@@ -70,12 +64,14 @@ class lannet(object):
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             try:
-                for epoch in range(int(train_total_images/batch_size)):
+                for step in range(train_step_num_per_epoch * network_config['num_epoch']):
                     _, loss, acc, iou, update_op = sess.run([train_op, train_losses, train_accuracy, train_mean_iou, train_metrics_op])
-                    print('train epoch:{}-loss={},acc={},iou={}'.format(epoch, loss, acc, iou))
+                    print('train epoch:{}-loss={},acc={},iou={}'.format(step, loss, acc, iou))
 
-                    acc = sess.run(val_accuracy)
-                    print('val epoch:{}-acc={}'.format(epoch, acc))
+                    if step % min(network_config['batch_size'], train_step_num_per_epoch) == 0:
+                        for i in range(val_step_num_per_epoch):
+                            acc = sess.run(val_accuracy)
+                            print('val epoch:{}-acc={}'.format(step, acc))
             except Exception as err:
                 print('{}'.format(err))
             finally:
