@@ -3,6 +3,8 @@ import os
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from config.config import config
+import weight.weight
+
 class lannet(object):
     def __init__(self):
         self._back_bone = enet()
@@ -37,7 +39,11 @@ class lannet(object):
         logits, probabilities = self._back_bone.building_net(input=images, batch_size=batch_size, reuse=reuse)
         predict = tf.argmax(probabilities, axis=-1)
 
-        losses = tf.losses.softmax_cross_entropy(images_onehot, logits)
+        w = weight.weight.median_frequency_balancing(image_annot_files, class_num)
+        w = images_onehot * w
+        w = tf.reduce_sum(w, axis=3)
+        losses = tf.losses.softmax_cross_entropy(images_onehot, logits, w)
+
         accuracy, acc_update_op = tf.metrics.accuracy(images_annot, predict)
         mean_iou, iou_update_op = tf.metrics.mean_iou(images_annot, predict, num_classes=class_num)
         metrics_op = tf.group(acc_update_op, iou_update_op)

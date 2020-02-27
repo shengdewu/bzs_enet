@@ -24,7 +24,7 @@
 	val
 	valannot
 	-->
-	    <image_path>D:/work_space/bzs/bzs_enet/dataset</image_path>
+	    <image_path>E:/workspace/bzs/TensorFlow-ENet/dataset</image_path>
         <image_suffix>png</image_suffix>
 		<class_num>12</class_num>
 	</image>

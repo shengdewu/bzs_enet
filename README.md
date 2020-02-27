@@ -4,3 +4,4 @@
 ##配置
 
 1.tensorflow == 1.15.2
+2. pillow
