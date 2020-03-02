@@ -7,7 +7,7 @@ class enet(object):
         self._enet_block = enet_block()
         return
 
-    def building_net(self, input, batch_size, c=12, stage_two_three=1, repeat_init_block=0, skip=False, reuse=None):
+    def building_net(self, input, batch_size, c=12, stage_two_three=2, repeat_init_block=1, skip=False, reuse=None):
 
         inputs_shape = input.get_shape().as_list()
         input.set_shape(shape=(batch_size, inputs_shape[1], inputs_shape[2], inputs_shape[3]))

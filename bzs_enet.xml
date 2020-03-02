@@ -4,16 +4,19 @@
 		<batch_size>10</batch_size>
 		<eval_batch_size>25</eval_batch_size>
 		<num_epoch>300</num_epoch>
+		<stage_two_three>2</stage_two_three>
+		<repeat_init_block>1</repeat_init_block>
+		<skip>False</skip>
 	</train>
     <optimize>
 		<learning_rate>0.0005</learning_rate>
 		<decay_rate>0.1</decay_rate>
-		<epsilon>0.0000008</epsilon>
+		<epsilon>0.00000001</epsilon>
 		<num_epochs_before_decay>100</num_epochs_before_decay>
     </optimize>
     <mode>
         <mode_path>E:/workspace/bzs/bzs_enet/mode_path/checkout</mode_path>
-        <update_mode_freq>1</update_mode_freq>
+        <update_mode_freq>100</update_mode_freq>
     </mode>
 	<image>
 	<!--
