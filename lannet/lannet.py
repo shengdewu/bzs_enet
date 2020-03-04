@@ -57,13 +57,9 @@ class lannet(object):
     def train(self, config_path):
         network_config = config.get_config(config_path)
 
-        images, images_annot,images_onehot, step_num_per_epoch = self.construct_image_tensor(network_config['image_path'],
+        images, images_annot, images_onehot, step_num_per_epoch = self.construct_image_tensor(network_config['image_path'],
                                                                                              network_config['batch_size'],
                                                                                              network_config['class_num'])
-
-        image_annot_shape = images_annot.get_shape().as_list()
-        images_annot = tf.reshape(images_annot, [network_config['batch_size'], image_annot_shape[1], image_annot_shape[2]])
-        images_onehot = tf.one_hot(images_annot, network_config['class_num'])
 
         with slim.arg_scope(nn.enet_arg_scope(weight_decay=network_config['l2_weight_decay'])):
             logits, probabilities = self._back_bone.building_net(input=images,
