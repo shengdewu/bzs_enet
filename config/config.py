@@ -29,6 +29,7 @@ class config(object):
         config['decay_rate'] = float(optimize[0].getElementsByTagName('decay_rate')[0].firstChild.data)
         config['epsilon'] = float(optimize[0].getElementsByTagName('epsilon')[0].firstChild.data)
         config['num_epochs_before_decay'] = float(optimize[0].getElementsByTagName('num_epochs_before_decay')[0].firstChild.data)
+        config['l2_weight_decay'] = float(optimize[0].getElementsByTagName('l2_weight_decay')[0].firstChild.data)
 
         mode = collection.getElementsByTagName('mode')
         config['mode_path'] = mode[0].getElementsByTagName('mode_path')[0].firstChild.data
