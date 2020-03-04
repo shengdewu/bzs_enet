@@ -39,6 +39,7 @@ class config(object):
         config['image_path'] = image[0].getElementsByTagName('image_path')[0].firstChild.data
         config['image_suffix'] = image[0].getElementsByTagName('image_suffix')[0].firstChild.data
         config['class_num'] = int(image[0].getElementsByTagName('class_num')[0].firstChild.data)
+        config['result_path'] = image[0].getElementsByTagName('result_path')[0].firstChild.data
 
         return config
 

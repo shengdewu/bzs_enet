@@ -6,6 +6,7 @@ from config.config import config
 import weight.weight
 from enet.nn import nn
 import time
+import matplotlib.pyplot as plt
 
 class lannet(object):
     def __init__(self):
@@ -100,6 +101,7 @@ class lannet(object):
                                                                         reuse=True)
 
         val_accuracy, val_mean_iou, val_metrics_op = self.create_metrics(val_probabilities, val_images_annot, network_config['class_num'])
+        val_predict = tf.argmax(val_probabilities, axis=-1)
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
@@ -124,6 +126,23 @@ class lannet(object):
                     if step % network_config['update_mode_freq'] == 0:
                         print('save sess to {}'.format(network_config['mode_path']))
                         saver.save(sess, network_config['mode_path'])
+
+                if network_config['result_path'] != '':
+                    if not os.path.exists(network_config['result_path']):
+                        os.makedirs(network_config['result_path'])
+
+                    predict_imgs, annot_imgs = sess.run([val_predict, val_images_annot])
+                    for index in range(network_config['eval_batch_size']):
+                        predict_img = predict_imgs[index]
+                        annot_img = annot_imgs[index]
+                        fig, ax = plt.subplots(1, 2)
+                        ax[0].imshow(predict_img)
+                        ax[0].set_title('predict')
+                        ax[1].imshow(annot_img)
+                        ax[1].set_title('label')
+                        plt.savefig(network_config['result_path']+'/image'+str(index)+'.png')
+                        plt.close()
+
             except Exception as err:
                 print('{}'.format(err))
             finally:

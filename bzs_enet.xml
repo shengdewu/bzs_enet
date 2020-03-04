@@ -16,7 +16,7 @@
 		<l2_weight_decay>0.0002</l2_weight_decay>
     </optimize>
     <mode>
-        <mode_path>D:/work_space/bzs/bzs_enet/mode_path/checkout</mode_path>
+        <mode_path>E:/workspace/bzs/bzs_enet/mode_path/checkout</mode_path>
         <update_mode_freq>100</update_mode_freq>
     </mode>
 	<image>
@@ -29,7 +29,8 @@
 	val
 	valannot
 	-->
-	    <image_path>D:/work_space/bzs/TensorFlow-ENet/dataset</image_path>
+	    <image_path>E:/workspace/bzs/TensorFlow-ENet/dataset</image_path>
+		<result_path>E:/workspace/bzs/bzs_enet/output</result_path>
         <image_suffix>png</image_suffix>
 		<class_num>12</class_num>
 	</image>
