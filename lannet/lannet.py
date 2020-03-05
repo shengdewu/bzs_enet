@@ -7,6 +7,7 @@ import weight.weight
 from enet.nn import nn
 import time
 import matplotlib.pyplot as plt
+import sys
 
 class lannet(object):
     def __init__(self):
@@ -112,6 +113,7 @@ class lannet(object):
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             try:
+                min_loss = sys.float_info.max
                 for step in range(step_num_per_epoch * network_config['num_epoch']):
 
                     start_time = time.time()
@@ -123,7 +125,9 @@ class lannet(object):
                             start_time = time.time()
                             _, acc, iou = sess.run([val_metrics_op, val_accuracy, val_mean_iou])
                             print('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
-                    if step % network_config['update_mode_freq'] == 0:
+
+                    if step+1 % network_config['update_mode_freq'] == 0 and min_loss > loss:
+                        min_loss = loss
                         print('save sess to {}'.format(network_config['mode_path']))
                         saver.save(sess, network_config['mode_path'])
 
