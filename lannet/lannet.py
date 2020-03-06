@@ -76,6 +76,7 @@ class lannet(object):
         w = images_onehot * w
         w = tf.reduce_sum(w, axis=3)
         losses = tf.losses.softmax_cross_entropy(onehot_labels=images_onehot, logits=logits, weights=w)
+        #total_loss = losses + |w| + |b|
         total_loss = tf.losses.get_total_loss()
 
         accuracy, mean_iou, metrics_op = self.create_metrics(probabilities, images_annot, network_config['class_num'])
