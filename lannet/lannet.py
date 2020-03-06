@@ -127,9 +127,9 @@ class lannet(object):
                             _, acc, iou = sess.run([val_metrics_op, val_accuracy, val_mean_iou])
                             print('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
 
-                    if step+1 % network_config['update_mode_freq'] == 0 and min_loss > loss:
+                    if (step+1) % network_config['update_mode_freq'] == 0 and min_loss > loss:
                         min_loss = loss
-                        print('save sess to {}'.format(network_config['mode_path']))
+                        print('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
                         saver.save(sess, network_config['mode_path'])
 
                 if network_config['result_path'] != '':
