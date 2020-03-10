@@ -41,6 +41,8 @@ class config(object):
         config['class_num'] = int(image[0].getElementsByTagName('class_num')[0].firstChild.data)
         config['result_path'] = image[0].getElementsByTagName('result_path')[0].firstChild.data
 
+        log_path = collection.getElementsByTagName('log_path')
+        config['log_path'] = log_path[0].firstChild.data
         return config
 
 

@@ -2,12 +2,13 @@ from enet.enet import enet
 import os
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-from config.config import config
 import weight.weight
 from enet.nn import nn
 import time
 import matplotlib.pyplot as plt
 import sys
+import logging
+import traceback
 
 class lannet(object):
     def __init__(self):
@@ -56,8 +57,8 @@ class lannet(object):
         w = weight.weight.median_frequency_balancing(image_annot_files, class_num)
         return w
 
-    def train(self, config_path):
-        network_config = config.get_config(config_path)
+    def train(self, network_config):
+        logging.info('ready for training, param={}'.format(network_config))
 
         images, images_annot, images_onehot, step_num_per_epoch = self.construct_image_tensor(network_config['image_path'],
                                                                                              network_config['batch_size'],
@@ -120,17 +121,22 @@ class lannet(object):
                     start_time = time.time()
                     loss, global_step_cnt, acc, iou, update_op = sess.run([train_op, global_step, accuracy, mean_iou, metrics_op])
                     print('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
+                    logging.info('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
 
                     if step % min(network_config['batch_size'], step_num_per_epoch) == 0:
                         for i in range(val_step_num_per_epoch):
                             start_time = time.time()
                             _, acc, iou = sess.run([val_metrics_op, val_accuracy, val_mean_iou])
                             print('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
+                            logging.info('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
 
                     if (step+1) % network_config['update_mode_freq'] == 0 and min_loss > loss:
                         min_loss = loss
                         print('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
+                        logging.info('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
                         saver.save(sess, network_config['mode_path'])
+
+                logging.info('train finish')
 
                 if network_config['result_path'] != '':
                     if not os.path.exists(network_config['result_path']):
@@ -150,10 +156,9 @@ class lannet(object):
 
             except Exception as err:
                 print('{}'.format(err))
+                logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
             finally:
                 coord.request_stop()
                 coord.join(threads)
             coord.join(threads)
-
-        print('test')
         return

@@ -3,9 +3,9 @@
 	<train>
 		<batch_size>10</batch_size>
 		<eval_batch_size>25</eval_batch_size>
-		<num_epoch>300</num_epoch>
+		<num_epoch>600</num_epoch>
 		<stage_two_three>1</stage_two_three>
-		<repeat_init_block>1</repeat_init_block>
+		<repeat_init_block>2</repeat_init_block>
 		<skip>False</skip>
 	</train>
     <optimize>
@@ -34,4 +34,5 @@
         <image_suffix>png</image_suffix>
 		<class_num>12</class_num>
 	</image>
+	<log_path>./log_info</log_path>
 </config>
