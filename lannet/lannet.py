@@ -131,9 +131,9 @@ class lannet(object):
                             logging.info('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
 
                     if (step+1) % network_config['update_mode_freq'] == 0 and min_loss > loss:
-                        min_loss = loss
                         print('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
                         logging.info('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
+                        min_loss = loss
                         saver.save(sess, network_config['mode_path'])
 
                 logging.info('train finish')
