@@ -25,7 +25,7 @@ class enet_block(object):
         return output
 
     @slim.add_arg_scope
-    def bottleneck_downsample(self, input, output_depth, filter_size, scope, dilation_rate=1, projection=4, drop_prob=0.01, is_training=True):
+    def bottleneck_downsample(self, input, output_depth, filter_size, scope, projection=4, drop_prob=0.01, is_training=True):
         input_shape = input.get_shape().as_list()
         project_depth = int(input_shape[3] / projection)
 
@@ -34,7 +34,7 @@ class enet_block(object):
         sub_net = self.prebn(sub_net, is_training=is_training, scope=scope+'prebn1')
 
         #conv
-        sub_net = slim.conv2d(sub_net, project_depth, [filter_size, filter_size], rate=dilation_rate, stride=1, scope=scope+'conv')
+        sub_net = slim.conv2d(sub_net, project_depth, [filter_size, filter_size], stride=1, scope=scope+'conv')
         sub_net = self.prebn(sub_net, is_training=is_training, scope=scope+'prebn2')
 
         #second 1*1
@@ -43,6 +43,7 @@ class enet_block(object):
 
         #regularizer
         sub_net = nn.spatial_dropout(sub_net, drop_prob=drop_prob, seed=1, scope=scope+'regular')
+        # sub_net = nn.prelu(sub_net, scope=scope+'prelu1')
 
         #main branch
         main_net, indices = tf.nn.max_pool_with_argmax(input, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=scope+'main_branch_max_pooling')
@@ -76,6 +77,7 @@ class enet_block(object):
 
         #regularizer
         sub_net = nn.spatial_dropout(sub_net, drop_prob=drop_prob, seed=1, scope=scope+'regular')
+        # sub_net = nn.prelu(sub_net, scope=scope+'prelu1')
 
         #main branch
         main_net = slim.conv2d(input, output_shape[-1], [1, 1], stride=1, scope=scope + 'main_branch_conv')
@@ -117,6 +119,7 @@ class enet_block(object):
 
         #regularizer
         sub_net = nn.spatial_dropout(sub_net, drop_prob=drop_prob, seed=1, scope=scope+'regular')
+        #sub_net = nn.prelu(sub_net, scope=scope+'prelu1')
 
         #main branch
         net = tf.add(input, sub_net)

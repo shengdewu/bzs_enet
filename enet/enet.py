@@ -13,7 +13,10 @@ class enet(object):
         input.set_shape(shape=(batch_size, inputs_shape[1], inputs_shape[2], inputs_shape[3]))
 
         with tf.variable_scope(name_or_scope='enet', reuse=reuse):
-            with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.01):
+            with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.01),\
+                 slim.arg_scope([slim.conv2d_transpose, slim.conv2d], activation_fn=None),\
+                 slim.arg_scope([enet_block.prebn], fused=True):
+
                 initial = self._enet_block.initial_block(input, scope='initial')
                 for i in range(0, repeat_init_block):
                     initial = self._enet_block.initial_block(input, scope='initial'+str(i))
