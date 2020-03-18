@@ -123,7 +123,7 @@ class lannet(object):
                     print('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
                     logging.info('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
 
-                    if step % min(network_config['batch_size'], step_num_per_epoch) == 0:
+                    if step % max(network_config['update_mode_freq'], step_num_per_epoch) == 0:
                         for i in range(val_step_num_per_epoch):
                             start_time = time.time()
                             _, acc, iou = sess.run([val_metrics_op, val_accuracy, val_mean_iou])
