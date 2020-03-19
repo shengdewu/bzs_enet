@@ -13,14 +13,14 @@ class nn(object):
         :param relu: bool
         :return:
         '''
-        positive = tf.nn.relu(x, name=scope)
-        negative = 0
-
         if not relu:
             alpha = tf.get_variable(scope + 'alpha', x.get_shape()[-1], initializer=tf.constant_initializer(0.0), dtype=tf.float32)
             negative = alpha * (x - abs(x)) * 0.5
-
-        return positive + negative
+            positive = tf.nn.relu(x)
+            active = positive + negative
+        else:
+            active = tf.nn.relu(x, name=scope)
+        return active
 
     @staticmethod
     @slim.add_arg_scope

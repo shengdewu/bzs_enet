@@ -9,9 +9,9 @@ class enet_block(object):
         return
 
     @slim.add_arg_scope
-    def prebn(self, input, scope, is_training=True, fused=None):
+    def prebn(self, input, scope, is_training=True, fused=None, relu=False):
         net_conv = slim.batch_norm(input, is_training=is_training, fused=fused, scope=scope + '_batchnorm')
-        output = nn.prelu(net_conv, scope=scope+'prelu')
+        output = nn.prelu(net_conv, relu=relu, scope=scope+'prelu')
         return output
 
     @slim.add_arg_scope
@@ -77,7 +77,7 @@ class enet_block(object):
 
         #regularizer
         sub_net = nn.spatial_dropout(sub_net, drop_prob=drop_prob, seed=1, scope=scope+'regular')
-        # sub_net = nn.prelu(sub_net, scope=scope+'prelu1')
+        sub_net = nn.prelu(sub_net, scope=scope+'prelu1')
 
         #main branch
         main_net = slim.conv2d(input, output_shape[-1], [1, 1], stride=1, scope=scope + 'main_branch_conv')
@@ -119,7 +119,7 @@ class enet_block(object):
 
         #regularizer
         sub_net = nn.spatial_dropout(sub_net, drop_prob=drop_prob, seed=1, scope=scope+'regular')
-        #sub_net = nn.prelu(sub_net, scope=scope+'prelu1')
+        sub_net = nn.prelu(sub_net, scope=scope+'prelu1')
 
         #main branch
         net = tf.add(input, sub_net)
