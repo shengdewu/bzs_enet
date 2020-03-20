@@ -17,7 +17,7 @@ class enet_block(object):
     @slim.add_arg_scope
     def initial_block(self, input, scope):
         conv = slim.conv2d(input, 13, [3,3], stride=2, scope=scope+'conv')
-        bn = self.prebn(conv, scope=scope, fused=True)
+        bn = self.prebn(conv, scope=scope)
 
         max_pool = slim.max_pool2d(input, kernel_size=[2,2], stride=2, scope=scope+'max_pool')
 
