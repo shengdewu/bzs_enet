@@ -69,7 +69,6 @@ class lannet(object):
                                                                  batch_size=network_config['batch_size'],
                                                                  c=network_config['class_num'],
                                                                  stage_two_three=network_config['stage_two_three'],
-                                                                 repeat_init_block=network_config['repeat_init_block'],
                                                                  skip=network_config['skip'],
                                                                  reuse=None)
 
@@ -99,7 +98,6 @@ class lannet(object):
                                                                         batch_size=network_config['eval_batch_size'],
                                                                         c=network_config['class_num'],
                                                                         stage_two_three=network_config['stage_two_three'],
-                                                                        repeat_init_block=network_config['repeat_init_block'],
                                                                         skip=network_config['skip'],
                                                                         reuse=True)
 

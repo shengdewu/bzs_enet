@@ -7,7 +7,7 @@ class enet(object):
         self._enet_block = enet_block()
         return
 
-    def building_net(self, input, batch_size, c=12, stage_two_three=2, repeat_init_block=1, skip=False, reuse=None, is_trainging= True):
+    def building_net(self, input, batch_size, c=12, stage_two_three=2, skip=False, reuse=None, is_trainging= True):
 
         inputs_shape = input.get_shape().as_list()
         input.set_shape(shape=(batch_size, inputs_shape[1], inputs_shape[2], inputs_shape[3]))
@@ -18,8 +18,6 @@ class enet(object):
                 skip_net = list()
                 unpool_indices = list()
                 initial = self._enet_block.initial_block(input, scope='initial')
-                for i in range(0, repeat_init_block):
-                    initial = self._enet_block.initial_block(initial, scope='initial'+str(i))
 
                 skip_net.append(initial)
 

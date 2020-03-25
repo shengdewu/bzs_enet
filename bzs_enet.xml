@@ -5,7 +5,6 @@
 		<eval_batch_size>25</eval_batch_size>
 		<num_epoch>600</num_epoch>
 		<stage_two_three>1</stage_two_three>
-		<repeat_init_block>2</repeat_init_block>
 		<skip>True</skip>
 	</train>
     <optimize>
