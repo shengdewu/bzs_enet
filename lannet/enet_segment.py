@@ -10,7 +10,7 @@ import sys
 import logging
 import traceback
 
-class lannet(object):
+class enet_segment(object):
     def __init__(self):
         self._back_bone = enet()
         return
