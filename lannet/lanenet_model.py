@@ -3,7 +3,7 @@ from enet.enet_block import enet_block
 import tensorflow.contrib.slim as slim
 import tensorflow as tf
 
-class lanenet(object):
+class lanenet_model(object):
     def __init__(self):
         self._enet_block = enet_block()
         return
@@ -87,17 +87,16 @@ class lanenet(object):
             # full conv
             logits = slim.conv2d_transpose(bottleneck, num_outputs=c, kernel_size=[2, 2], stride=2,
                                            scope='fullconv')
-            probabilities = slim.softmax(logits, scope='probabilities')
+        return logits
 
-        return logits,probabilities
-
-    def build_net(self, input, batch_size, c, skip=False, reuse=None, is_trainging=True):
+    def build_net(self, input,  batch_size, c, skip=False, reuse=None, is_trainging=True):
 
         front, skip_net, unpool_indices = self.front_backbone(input, batch_size, 'front_backbone', reuse, is_trainging)
 
-        binary = self.back_backbone(front, skip_net, unpool_indices, 1, "binary", skip, reuse, is_trainging)
+        binary_logits = self.back_backbone(front, skip_net, unpool_indices, 2, "binary", skip, reuse, is_trainging)
 
-        instance = self.back_backbone(front, skip_net, unpool_indices, 1, "binary", skip, reuse, is_trainging)
+        embedding_logits = self.back_backbone(front, skip_net, unpool_indices, 4, "embedding", skip, reuse, is_trainging)
 
-        return
+        return binary_logits, embedding_logits
+
 
