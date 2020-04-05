@@ -89,7 +89,7 @@ class lanenet_model(object):
                                            scope='fullconv')
         return logits
 
-    def build_net(self, input,  batch_size, c, skip=False, reuse=None, is_trainging=True):
+    def build_net(self, input,  batch_size, skip=False, reuse=None, is_trainging=True):
 
         front, skip_net, unpool_indices = self.front_backbone(input, batch_size, 'front_backbone', reuse, is_trainging)
 
