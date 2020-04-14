@@ -4,6 +4,7 @@ import logging
 import os
 from weight import weight
 from losses import discriminative
+import numpy as np
 
 class lanenet(object):
     def __init__(self):
@@ -33,6 +34,19 @@ class lanenet(object):
 
         return tf.train.batch([src_img, binary_img, instance_img], batch_size=batch_size, allow_smaller_final_batch=True)
 
+    def _accuracy(self, label, predict):
+        logit = tf.nn.softmax(predict, axis=-1)
+        logit = tf.argmax(logit, axis=-1)
+        logit = tf.cast(logit, tf.float64)
+        logit = tf.expand_dims(logit, axis=-1)
+
+        idx = tf.where(tf.equal(label, 1))
+        out_logit = tf.gather_nd(logit, idx)
+        acc = tf.count_nonzero(out_logit)
+        total = tf.shape(out_logit)
+        recall = tf.divide(acc, tf.cast(total[0], tf.int64))
+        return [recall, logit, out_logit, acc, total]
+
     def train(self, config):
         src_queue, binary_queue, instance_queue = self._construct_img_queue(config['img_path'], config['batch_size'], config['width'], config['height'])
 
@@ -52,8 +66,6 @@ class lanenet(object):
         feature_dim = embedding_logits.get_shape().as_list()
 
         embedding_loss, l_var, l_dist, l_reg = discriminative.discriminative_loss_batch(embedding_logits, instance_queue, feature_dim, (feature_dim[0], feature_dim[1]), 0.5, 3.0, 1.0, 1.0, 0.001)
-
-
 
         return
 
