@@ -3,6 +3,8 @@ import tensorflow as tf
 import logging
 import os
 from weight import weight
+from losses import discriminative
+
 class lanenet(object):
     def __init__(self):
         self._binary_img_path = 'gt_binary_img'
@@ -33,8 +35,9 @@ class lanenet(object):
 
     def train(self, config):
         src_queue, binary_queue, instance_queue = self._construct_img_queue(config['img_path'], config['batch_size'], config['width'], config['height'])
+
         lannet_net = lanenet_model()
-        binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'])
+        binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
 
         binary_onehot_queue = tf.one_hot(binary_queue, 2)
 
@@ -42,7 +45,15 @@ class lanenet(object):
         w = binary_onehot_queue * w
         w = tf.reduce_sum(w, axis=3)
 
+        ls_loss = tf.losses.get_total_loss()
+
         binayr_loss = tf.losses.sparse_softmax_cross_entropy(binary_onehot_queue, binary_logits, weights=w)
+
+        feature_dim = embedding_logits.get_shape().as_list()
+
+        embedding_loss, l_var, l_dist, l_reg = discriminative.discriminative_loss_batch(embedding_logits, instance_queue, feature_dim, (feature_dim[0], feature_dim[1]), 0.5, 3.0, 1.0, 1.0, 0.001)
+
+
 
         return
 

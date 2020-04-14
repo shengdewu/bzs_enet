@@ -2,6 +2,7 @@ from enet import enet
 from enet.enet_block import enet_block
 import tensorflow.contrib.slim as slim
 import tensorflow as tf
+from enet import nn
 
 class lanenet_model(object):
     def __init__(self):
@@ -89,13 +90,13 @@ class lanenet_model(object):
                                            scope='fullconv')
         return logits
 
-    def build_net(self, input,  batch_size, skip=False, reuse=None, is_trainging=True):
+    def build_net(self, input,  batch_size, l2_weight_decay, skip=False, reuse=None, is_trainging=True):
+        with slim.arg_scope(nn.nn.enet_arg_scope(weight_decay=l2_weight_decay)):
+            front, skip_net, unpool_indices = self.front_backbone(input, batch_size, 'front_backbone', reuse, is_trainging)
 
-        front, skip_net, unpool_indices = self.front_backbone(input, batch_size, 'front_backbone', reuse, is_trainging)
+            binary_logits = self.back_backbone(front, skip_net, unpool_indices, 2, "binary", skip, reuse, is_trainging)
 
-        binary_logits = self.back_backbone(front, skip_net, unpool_indices, 2, "binary", skip, reuse, is_trainging)
-
-        embedding_logits = self.back_backbone(front, skip_net, unpool_indices, 4, "embedding", skip, reuse, is_trainging)
+            embedding_logits = self.back_backbone(front, skip_net, unpool_indices, 4, "embedding", skip, reuse, is_trainging)
 
         return binary_logits, embedding_logits
 
