@@ -30,7 +30,7 @@ def discriminative_loss(label, predict, label_shape, feature_dim, delta_v, delta
     uc_avg_1 = tf.tile(uc_avg, [instance_num, 1])
     shape = uc_avg_1.get_shape().as_list()
     uc_avg_2 = tf.tile(uc_avg, [1, instance_num])
-    uc_avg_2 = tf.reshape(uc_avg_2, (shape[0], shape[1]))
+    uc_avg_2 = tf.reshape(uc_avg_2, (instance_num*instance_num, feature_dim))
     uc_diff = tf.subtract(uc_avg_1, uc_avg_2)
 
     uc_sum_cache = tf.reduce_sum(tf.abs(uc_diff), axis=1)
@@ -66,7 +66,7 @@ def discriminative_loss_batch(prediction, correct_label, feature_dim, image_shap
 
     def body(label, batch, out_loss, out_var, out_dist, out_reg, i):
         disc_loss, l_var, l_dist, l_reg = discriminative_loss(
-            prediction[i], correct_label[i], image_shape, feature_dim, delta_v, delta_d, param_var, param_dist, param_reg)
+            correct_label[i], prediction[i], image_shape, feature_dim, delta_v, delta_d, param_var, param_dist, param_reg)
 
         out_loss = out_loss.write(i, disc_loss)
         out_var = out_var.write(i, l_var)
