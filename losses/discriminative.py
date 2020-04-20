@@ -55,39 +55,33 @@ def discriminative_loss(label, predict, label_shape, feature_dim, delta_v, delta
 
     loss = param_scale*(l_var + l_dist + l_reg)
 
-    return loss
+    return loss, l_var, l_dist, l_reg
 
 
 def discriminative_loss_batch(prediction, correct_label, feature_dim, image_shape,
                         delta_v, delta_d, param_var, param_dist, param_reg):
 
-    def cond(label, batch, out_loss, out_var, out_dist, out_reg, i):
-        return tf.less(i, tf.shape(batch)[0])
+    def cond(label, prediction, out_loss, out_var, out_dist, out_reg, i):
+        return tf.less(i, tf.shape(prediction)[0])
 
-    def body(label, batch, out_loss, out_var, out_dist, out_reg, i):
-        disc_loss, l_var, l_dist, l_reg = discriminative_loss(
-            correct_label[i], prediction[i], image_shape, feature_dim, delta_v, delta_d, param_var, param_dist, param_reg)
+    def body(label, prediction, out_loss, out_var, out_dist, out_reg, i):
+        disc_loss, l_var, l_dist, l_reg = discriminative_loss(correct_label[i], prediction[i], image_shape, feature_dim, delta_v, delta_d, param_var, param_dist, param_reg)
 
         out_loss = out_loss.write(i, disc_loss)
         out_var = out_var.write(i, l_var)
         out_dist = out_dist.write(i, l_dist)
         out_reg = out_reg.write(i, l_reg)
 
-        return label, batch, out_loss, out_var, out_dist, out_reg, i + 1
+        return label, prediction, out_loss, out_var, out_dist, out_reg, i + 1
 
     # TensorArray is a data structure that support dynamic writing
-    output_ta_loss = tf.TensorArray(
-        dtype=tf.float32, size=0, dynamic_size=True)
-    output_ta_var = tf.TensorArray(
-        dtype=tf.float32, size=0, dynamic_size=True)
-    output_ta_dist = tf.TensorArray(
-        dtype=tf.float32, size=0, dynamic_size=True)
-    output_ta_reg = tf.TensorArray(
-        dtype=tf.float32, size=0, dynamic_size=True)
+    output_ta_loss = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
+    output_ta_var = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
+    output_ta_dist = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
+    output_ta_reg = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
 
-    _, _, out_loss_op, out_var_op, out_dist_op, out_reg_op, _ = tf.while_loop(
-        cond, body, [
-            correct_label, prediction, output_ta_loss, output_ta_var, output_ta_dist, output_ta_reg, 0])
+    i = tf.constant(0)
+    _, _, out_loss_op, out_var_op, out_dist_op, out_reg_op, _ = tf.while_loop(cond, body, [correct_label, prediction, output_ta_loss, output_ta_var, output_ta_dist, output_ta_reg, i])
     out_loss_op = out_loss_op.stack()
     out_var_op = out_var_op.stack()
     out_dist_op = out_dist_op.stack()

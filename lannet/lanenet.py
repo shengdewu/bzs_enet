@@ -19,7 +19,7 @@ class lanenet(object):
         return
 
     def _featch_img_paths(self, img_path):
-        return [img_path + f for f in os.listdir(img_path) if f.endswith('.jpg')]
+        return [img_path + '/' + f for f in os.listdir(img_path) if f.endswith('.jpg')]
 
     def _construct_img_queue(self, root_path, batch_size, width, height, sub_path='train'):
         img_path = root_path + '/' + sub_path
@@ -60,6 +60,7 @@ class lanenet(object):
 
         lannet_net = lanenet_model()
         binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
+        binary_acc = self._accuracy(binary_queue, binary_logits)
 
         ls_loss = tf.losses.get_total_loss()
 
@@ -89,10 +90,10 @@ class lanenet(object):
         train_op = slim.learning.create_train_op(total_loss, optimizer)
 
         #验证
-        [test_src_queue, test_binary_queue, test_instance_queue], val_total = self._construct_img_queue(config['img_path'], config['eval_batch_size'], 512, 256, 'test')
-        test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'])
-        test_embedding_loss, test_l_var, test_l_dist, test_l_reg = discriminative.discriminative_loss_batch(test_embedding_logits, test_instance_queue, feature_dim, (feature_dim[0], feature_dim[1]), self.delta_v, self.delta_d, 1.0, 1.0, 0.001)
-        test_acc = self._accuracy(test_binary_queue, test_binary_logits)
+        # [test_src_queue, test_binary_queue, test_instance_queue], val_total = self._construct_img_queue(config['image_path'], config['eval_batch_size'], 512, 256, 'test')
+        # test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'])
+        # test_embedding_loss, test_l_var, test_l_dist, test_l_reg = discriminative.discriminative_loss_batch(test_embedding_logits, test_instance_queue, feature_dim, (feature_dim[0], feature_dim[1]), self.delta_v, self.delta_d, 1.0, 1.0, 0.001)
+        # test_acc = self._accuracy(test_binary_queue, test_binary_logits)
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
@@ -104,15 +105,15 @@ class lanenet(object):
                 min_loss = sys.float_info.max
                 for step in range(config['num_epoch'] * steps_per_epoch):
                     start_time = time.time()
-                    loss, b_loss, e_loss, var, dist, reg = sess.run([train_op, binayr_loss, embedding_loss, l_var, l_dist, l_reg])
-                    print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}'.format(step, time.time() - start_time, loss, e_loss, b_loss))
-                    logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}'.format(step, time.time() - start_time, loss, e_loss, b_loss))
+                    loss, b_loss, e_loss, var, dist, reg, acc = sess.run([train_op, binayr_loss, embedding_loss, l_var, l_dist, l_reg, binary_acc])
+                    print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc={}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc))
+                    logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc={}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc))
 
-                    if step % max(config['update_mode_freq'], steps_per_epoch) == 0:
-                            start_time = time.time()
-                            test_e_loss, test_b_loss = sess.run([test_embedding_loss, test_acc])
-                            print('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, test_e_loss, test_b_loss))
-                            logging.info('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, test_e_loss, test_b_loss))
+                    # if step % max(config['update_mode_freq'], steps_per_epoch) == 0:
+                    #         start_time = time.time()
+                    #         test_e_loss, test_b_loss = sess.run([test_embedding_loss, test_acc])
+                    #         print('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, test_e_loss, test_b_loss))
+                    #         logging.info('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, test_e_loss, test_b_loss))
 
                     if (step+1) % config['update_mode_freq'] == 0 and min_loss > loss:
                         print('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
