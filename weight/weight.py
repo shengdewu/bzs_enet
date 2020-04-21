@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+import tensorflow as tf
 
 def median_frequency_balancing(labeles_path, class_num):
     '''
@@ -40,3 +41,26 @@ def median_frequency_balancing(labeles_path, class_num):
 
     mbf[-1] = 0.0
     return mbf
+
+
+def inverse_class_probability_weighting( label, num):
+    '''
+    note: the inverse class probability weighting cite from enet a deep neural network architecture for real-time semantic segmentation
+        define as :
+            w = 1/ln(c + p)  s.t c=1.02
+    :param self:
+    :param label: 类别类
+    :param num:  类别总数
+    :return:
+    '''
+
+    freq = dict()
+    for n in range(num):
+        freq[n] = tf.reduce_sum(tf.equal(label, n))
+
+    total = tf.size(label)
+
+    w = list()
+    for c, cnt in freq.items():
+        w.append(tf.divide(1.0, tf.log(1.02+cnt/total)))
+    return w

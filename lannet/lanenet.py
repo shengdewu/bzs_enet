@@ -79,7 +79,8 @@ class lanenet(object):
         shape = binary_queue.get_shape().as_list()
         binary_queue = tf.reshape(binary_queue, [config['batch_size'], shape[1], shape[2]])
         binary_onehot_queue = tf.one_hot(binary_queue, 2)
-        w = weight.median_frequency_balancing(self._featch_img_paths(config['image_path'] + '/train/' + self._binary_img_path + '/'), 2)
+
+        w = weight.inverse_class_probability_weighting(binary_queue, 2)
         w = binary_onehot_queue * w
         w = tf.reduce_sum(w, axis=3)
         binayr_loss = tf.losses.softmax_cross_entropy(binary_onehot_queue, binary_logits, weights=w)
