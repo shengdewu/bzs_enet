@@ -9,6 +9,8 @@ import traceback
 import sys
 import time
 
+import numpy as np
+
 class lanenet(object):
     def __init__(self):
         self._binary_img_path = 'gt_binary_img'
@@ -46,21 +48,27 @@ class lanenet(object):
         logit = tf.nn.softmax(predict, axis=-1)
         logit = tf.argmax(logit, axis=-1)
         logit = tf.cast(logit, tf.float64)
-        logit = tf.expand_dims(logit, axis=-1)
+        logit_ex = tf.expand_dims(logit, axis=-1)
 
-        idx = tf.where(tf.equal(label, 1))
-        out_logit = tf.gather_nd(logit, idx)
-        acc = tf.count_nonzero(out_logit)
-        total = tf.shape(out_logit)
-        recall = tf.divide(acc, tf.cast(total[0], tf.int64))
-        return recall
+        true = tf.equal(label, 1)
+        idx = tf.where(true)
+
+        out_logit = tf.gather_nd(logit_ex, idx)
+        num = tf.cast(tf.count_nonzero(out_logit), tf.float16)
+        total_t = tf.shape(out_logit)
+        acc = tf.divide(num, tf.cast(total_t[0], tf.float16))
+
+        position = tf.where(tf.equal(logit, 1))
+        total_p = tf.shape(position)
+        recall = tf.divide(num, tf.cast(total_p[0], tf.float16))
+        return acc, recall
 
     def train(self, config):
         [src_queue, binary_queue, instance_queue], total_files = self._construct_img_queue(config['image_path'], config['batch_size'], 512, 256)
 
         lannet_net = lanenet_model()
         binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
-        binary_acc = self._accuracy(binary_queue, binary_logits)
+        binary_acc, binary_recall = self._accuracy(binary_queue, binary_logits)
 
         ls_loss = tf.losses.get_total_loss()
 
@@ -105,9 +113,9 @@ class lanenet(object):
                 min_loss = sys.float_info.max
                 for step in range(config['num_epoch'] * steps_per_epoch):
                     start_time = time.time()
-                    loss, b_loss, e_loss, var, dist, reg, acc = sess.run([train_op, binayr_loss, embedding_loss, l_var, l_dist, l_reg, binary_acc])
-                    print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc={}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc))
-                    logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc={}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc))
+                    loss, b_loss, e_loss, var, dist, reg, acc,recall = sess.run([train_op, binayr_loss, embedding_loss, l_var, l_dist, l_reg, binary_acc,binary_recall])
+                    print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc/recall={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc, recall))
+                    logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc/recall={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc, recall))
 
                     # if step % max(config['update_mode_freq'], steps_per_epoch) == 0:
                     #         start_time = time.time()
