@@ -43,12 +43,12 @@ def median_frequency_balancing(labeles_path, class_num):
     return mbf
 
 
-def inverse_class_probability_weighting( label, num):
+def inverse_class_probability_weighting(label, num):
     '''
     note: the inverse class probability weighting cite from enet a deep neural network architecture for real-time semantic segmentation
         define as :
             w = 1/ln(c + p)  s.t c=1.02
-    :param self:
+
     :param label: 类别类
     :param num:  类别总数
     :return:
@@ -56,7 +56,7 @@ def inverse_class_probability_weighting( label, num):
 
     freq = dict()
     for n in range(num):
-        freq[n] = tf.reduce_sum(tf.equal(label, n))
+        freq[n] = tf.reduce_sum(tf.cast(tf.equal(label, n), tf.int32))
 
     total = tf.size(label)
 

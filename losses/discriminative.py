@@ -59,13 +59,14 @@ def discriminative_loss(label, predict, label_shape, feature_dim, delta_v, delta
 
 
 def discriminative_loss_batch(prediction, correct_label, feature_dim, image_shape,
-                        delta_v, delta_d, param_var, param_dist, param_reg):
+                              delta_v, delta_d, param_var, param_dist, param_reg):
 
     def cond(label, prediction, out_loss, out_var, out_dist, out_reg, i):
         return tf.less(i, tf.shape(prediction)[0])
 
     def body(label, prediction, out_loss, out_var, out_dist, out_reg, i):
-        disc_loss, l_var, l_dist, l_reg = discriminative_loss(correct_label[i], prediction[i], image_shape, feature_dim, delta_v, delta_d, param_var, param_dist, param_reg)
+        disc_loss, l_var, l_dist, l_reg = discriminative_loss(label=correct_label[i], predict=prediction[i], label_shape=image_shape, feature_dim=feature_dim,
+                                                              delta_v=delta_v, delta_d=delta_d, param_var=param_var, param_dist=param_dist, param_reg=param_reg)
 
         out_loss = out_loss.write(i, disc_loss)
         out_var = out_var.write(i, l_var)

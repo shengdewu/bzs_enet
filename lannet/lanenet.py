@@ -17,7 +17,7 @@ class lanenet(object):
         self._instance_img_path = 'gt_instance_img'
         self._src_img_path = 'gt_src_img'
         self.delta_v = 0.5
-        self.delta_d = 3
+        self.delta_d = 3.0
         return
 
     def _featch_img_paths(self, img_path):
@@ -70,11 +70,11 @@ class lanenet(object):
         binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
         binary_acc, binary_recall = self._accuracy(binary_queue, binary_logits)
 
-        ls_loss = tf.losses.get_total_loss()
-
         feature_dim = instance_queue.get_shape().as_list()
         instance_queue = tf.reshape(instance_queue, [config['batch_size'], feature_dim[1], feature_dim[2]])
-        embedding_loss, l_var, l_dist, l_reg = discriminative.discriminative_loss_batch(embedding_logits, instance_queue, embedding_logits.get_shape().as_list()[3], (feature_dim[1], feature_dim[2]), self.delta_v, self.delta_d, 1.0, 1.0, 0.001)
+        embedding_loss, l_var, l_dist, l_reg = discriminative.discriminative_loss_batch(prediction=embedding_logits, correct_label=instance_queue,
+                                                                                        feature_dim=embedding_logits.get_shape().as_list()[3], image_shape=(feature_dim[1], feature_dim[2]),
+                                                                                        delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
 
         shape = binary_queue.get_shape().as_list()
         binary_queue = tf.reshape(binary_queue, [config['batch_size'], shape[1], shape[2]])
@@ -85,7 +85,15 @@ class lanenet(object):
         w = tf.reduce_sum(w, axis=3)
         binayr_loss = tf.losses.softmax_cross_entropy(binary_onehot_queue, binary_logits, weights=w)
 
-        total_loss = ls_loss + binayr_loss + embedding_loss
+        l2_reg_loss = tf.constant(0.0, tf.float32)
+        for vv in tf.trainable_variables():
+            if 'conv2d' in vv.name or 'batch_norm' in vv.name:
+                print(vv.name)
+                l2_reg_loss = tf.add(l2_reg_loss, tf.nn.l2_loss(vv))
+
+        l2_reg_loss *= 0.001
+
+        total_loss = l2_reg_loss + binayr_loss + embedding_loss
 
         global_setp = tf.train.create_global_step()
         steps_per_epoch = int(total_files / config['batch_size'])
@@ -104,9 +112,14 @@ class lanenet(object):
         # test_embedding_loss, test_l_var, test_l_dist, test_l_reg = discriminative.discriminative_loss_batch(test_embedding_logits, test_instance_queue, feature_dim, (feature_dim[0], feature_dim[1]), self.delta_v, self.delta_d, 1.0, 1.0, 0.001)
         # test_acc = self._accuracy(test_binary_queue, test_binary_logits)
 
+        total_loss_summary = tf.summary.scalar(name='total-loss', tensor=total_loss)
+        train_summary_op = tf.summary.merge([total_loss_summary])
         saver = tf.train.Saver()
         with tf.Session() as sess:
             sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
+
+            summary_writer = tf.summary.FileWriter(config['result_path']+'/summary')
+            summary_writer.add_graph(sess.graph)
 
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
@@ -114,10 +127,11 @@ class lanenet(object):
                 min_loss = sys.float_info.max
                 for step in range(config['num_epoch'] * steps_per_epoch):
                     start_time = time.time()
-                    loss, b_loss, e_loss, var, dist, reg, acc,recall = sess.run([train_op, binayr_loss, embedding_loss, l_var, l_dist, l_reg, binary_acc,binary_recall])
+                    loss, b_loss, e_loss, var, dist, reg, acc, recall, train_summary = sess.run([train_op, binayr_loss, embedding_loss, l_var, l_dist, l_reg, binary_acc,binary_recall,train_summary_op])
                     print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc/recall={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc, recall))
                     logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, binary_acc/recall={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, acc, recall))
 
+                    summary_writer.add_summary(train_summary, global_step=step)
                     # if step % max(config['update_mode_freq'], steps_per_epoch) == 0:
                     #         start_time = time.time()
                     #         test_e_loss, test_b_loss = sess.run([test_embedding_loss, test_acc])

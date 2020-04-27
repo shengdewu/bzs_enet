@@ -17,7 +17,7 @@ class lanenet_model(object):
             with slim.arg_scope([slim.conv2d_transpose, slim.conv2d], activation_fn=None), slim.arg_scope([enet_block.prebn], fused=True, is_training=is_training):
                 skip_net = list()
                 unpool_indices = list()
-                initial = self._enet_block.initial_block(input, scope='initial')
+                initial = self._enet_block.initial_block(input, scope='initial_block')
 
                 skip_net.append(initial)
 
