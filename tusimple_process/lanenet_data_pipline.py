@@ -24,22 +24,17 @@ class lanenet_data_pipline(object):
         if out_path[-1] == '/':
             out_path = out_path[0:-1]
 
-        if data_path[-1] != '/':
-            train_path = data_path+'/train'
-        else:
-            train_path = data_path + 'train'
-
-        if not os.path.exists(train_path):
-            raise FileExistsError('{} not find train path'.format(data_path))
+        if not os.path.exists(data_path):
+            raise FileExistsError('{} not find data path'.format(data_path))
 
         binary_path = self._create_path(out_path + '/gt_binary_img')
         instance_path = self._create_path(out_path + '/gt_instance_img')
         img_path = self._create_path(out_path + '/gt_src_img')
 
-        json_files = [f for f in os.listdir(train_path) if f.endswith('.json')]
+        json_files = [f for f in os.listdir(data_path) if f.endswith('.json')]
 
         if len(json_files) < 0:
-            raise FileExistsError('{} not exists json files'.format(train_path))
+            raise FileExistsError('{} not exists json files'.format(data_path))
 
         instance_file_name = set()
         binary_file_name = set()
@@ -47,7 +42,7 @@ class lanenet_data_pipline(object):
 
         for jfile in json_files:
             logging.info('start process json file: {}'.format(jfile))
-            with open(train_path+'/'+jfile, 'r') as handle:
+            with open(data_path+'/'+jfile, 'r') as handle:
                 while True:
                     line = handle.readline()
                     if not line:
@@ -59,7 +54,7 @@ class lanenet_data_pipline(object):
                     raw_file = lane_dict['raw_file']
                     file_seg = raw_file.split('/')
                     file_name = file_seg[-3] + '-' + file_seg[-2]+'-' + file_seg[-1]
-                    image_path = '{}/{}'.format(train_path, raw_file)
+                    image_path = '{}/{}'.format(data_path, raw_file)
                     logging.info('start process image {}'.format(image_path))
 
                     if not os.path.exists(image_path):
