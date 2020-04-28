@@ -18,7 +18,7 @@ def discriminative_loss(label, predict, label_shape, feature_dim, delta_v, delta
     uc_avg = tf.div(uc, tf.reshape(label_cnt, (-1, 1)))
     uc_avg_expand = tf.gather(uc_avg, label_index)
 
-    distance = tf.norm(tf.subtract(uc_avg_expand, predict_reshape), axis=1)
+    distance = tf.norm(tf.subtract(uc_avg_expand, predict_reshape), axis=1, ord=1)
     distance = tf.subtract(distance, delta_v)
     distance = tf.clip_by_value(distance, 0, distance)
     distance = tf.square(distance)
@@ -38,7 +38,7 @@ def discriminative_loss(label, predict, label_shape, feature_dim, delta_v, delta
     bool_mask = tf.not_equal(uc_sum_cache, zero_vector)
     mu_diff_bool = tf.boolean_mask(uc_diff, bool_mask)
 
-    mu_norm1 = tf.norm(mu_diff_bool, axis=1)
+    mu_norm1 = tf.norm(mu_diff_bool, axis=1, ord=1)
     mu_norm1 = tf.subtract(2.*delta_d, mu_norm1)
     mu_norm_clip = tf.clip_by_value(mu_norm1, 0., mu_norm1)
     mu_norm = tf.square(mu_norm_clip)
@@ -46,7 +46,7 @@ def discriminative_loss(label, predict, label_shape, feature_dim, delta_v, delta
     l_dist = tf.reduce_mean(mu_norm)
 
     ### Calculate l_reg
-    l_reg = tf.reduce_mean(tf.norm(uc_avg, axis=1))
+    l_reg = tf.reduce_mean(tf.norm(uc_avg, axis=1, ord=1))
 
     param_scale = 1.
     l_var = param_var * l_var
