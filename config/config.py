@@ -39,6 +39,8 @@ class config(object):
         config['image_suffix'] = image[0].getElementsByTagName('image_suffix')[0].firstChild.data
         config['class_num'] = int(image[0].getElementsByTagName('class_num')[0].firstChild.data)
         config['result_path'] = image[0].getElementsByTagName('result_path')[0].firstChild.data
+        config['img_width'] = int(image[0].getElementsByTagName('img_width')[0].firstChild.data)
+        config['img_height'] = int(image[0].getElementsByTagName('img_height')[0].firstChild.data)
 
         log_path = collection.getElementsByTagName('log_path')
         config['log_path'] = log_path[0].firstChild.data

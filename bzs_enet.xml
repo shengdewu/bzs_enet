@@ -19,7 +19,7 @@
         <update_mode_freq>100</update_mode_freq>
     </mode>
 	<image>
-	<!--
+	<!-- enet
 	image_path下文件夹名必须是如下名字
 	test   测试文件
 	testannot 测试标签文件
@@ -28,10 +28,19 @@
 	val
 	valannot
 	-->
-	    <image_path>./dataset</image_path>
+	<!-- lannet
+	gt_binary_img
+	gt_instance_img
+	gt_src_img
+	test_files.txt
+	train_files.txt
+	-->
+	    <image_path>D:/work_space/tuSimpleDataSet/lanenet_data/</image_path>
 		<result_path>./output</result_path>
         <image_suffix>png</image_suffix>
 		<class_num>12</class_num>
+		<img_width>512</img_width>
+		<img_height>256</img_height>
 	</image>
 	<log_path>./log_info</log_path>
 </config>

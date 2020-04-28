@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from log import log_configure
 import logging
+import math
 
 class lanenet_data_pipline(object):
     def __init__(self):
@@ -14,10 +15,11 @@ class lanenet_data_pipline(object):
         os.makedirs(path, exist_ok=True)
         return path
 
-    def generate_data(self, data_path, out_path):
+    def generate_data(self, data_path, out_path, rate=0.7):
         '''
         :param data_path: tuSimple 数据集路径
         :param out_path: 产生结果输出路径
+        :param rate: 训练集和训练集的比例
         :return:
         '''
 
@@ -39,6 +41,8 @@ class lanenet_data_pipline(object):
         instance_file_name = set()
         binary_file_name = set()
         src_file_name = set()
+
+        total_files = list()
 
         for jfile in json_files:
             logging.info('start process json file: {}'.format(jfile))
@@ -88,29 +92,41 @@ class lanenet_data_pipline(object):
 
                     if binary_save_path in binary_file_name:
                         logging.warning('{} is exists'.format(binary_save_path))
-                        print('{} is exists'.format(binary_save_path))
+                        raise FileExistsError('{} is exists'.format(binary_save_path))
 
                     if instance_save_path in instance_file_name:
                         logging.warning('{} is exists'.format(instance_save_path))
-                        print('{} is exists'.format(instance_save_path))
+                        raise FileExistsError('{} is exists'.format(instance_save_path))
 
                     if img_save_path in src_file_name:
                         logging.warning('{} is exists'.format(img_save_path))
-                        print('{} is exists'.format(img_save_path))
+                        raise FileExistsError('{} is exists'.format(img_save_path))
 
                     cv2.imwrite(binary_save_path, binary_img)
                     cv2.imwrite(instance_save_path, instance_img)
                     cv2.imwrite(img_save_path, image)
 
-                    cv2.imshow('binary', binary_img)
-                    cv2.imshow('src', image)
-                    cv2.imshow('instance', instance_img)
-                    cv2.waitKey(10)
+                    # cv2.imshow('binary', binary_img)
+                    # cv2.imshow('src', image)
+                    # cv2.imshow('instance', instance_img)
+                    # cv2.waitKey(10)
                     binary_file_name.add(binary_save_path)
                     instance_file_name.add(instance_save_path)
                     src_file_name.add(img_save_path)
+
+                    total_files.append((binary_save_path, instance_save_path, img_save_path))
+
+        train_len = math.ceil(len(total_files) * 0.7)
+        with open(out_path+'/train_files.txt', 'w') as thandle:
+            for index in range(train_len):
+                thandle.write(total_files[index][0]+' '+total_files[index][1]+' '+total_files[index][2]+'\n')
+
+        with open(out_path+'/test_files.txt', 'w') as thandle:
+            for index in range(train_len+1, len(total_files)):
+                thandle.write(total_files[index][0]+' '+total_files[index][1]+' '+total_files[index][2]+'\n')
+
         return
 
 if __name__ == '__main__':
     lanenet_data_provide = lanenet_data_pipline()
-    lanenet_data_provide.generate_data('E:/workspace/bzs/tuSimpleDataSet', 'E:/workspace/bzs/tuSimpleDataSet/lanenet_data')
+    lanenet_data_provide.generate_data('D:/work_space/tuSimpleDataSet/train/', 'D:/work_space/tuSimpleDataSet/lanenet_data/')

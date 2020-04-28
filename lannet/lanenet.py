@@ -14,21 +14,34 @@ import numpy as np
 
 class lanenet(object):
     def __init__(self):
-        self._binary_img_path = 'gt_binary_img'
-        self._instance_img_path = 'gt_instance_img'
-        self._src_img_path = 'gt_src_img'
         self.delta_v = 0.5
         self.delta_d = 3.0
         return
 
     def _featch_img_paths(self, img_path):
-        return [img_path + '/' + f for f in os.listdir(img_path) if f.endswith('.jpg')]
+        binary_img_files = list()
+        instance_img_files = list()
+        src_img_files = list()
+        with open(img_path, 'r') as handler:
+            while True:
+                line = handler.readline()
+                if not line:
+                    break
+                path = line.strip('\n')
+                pathes = path.split(' ')
+                for p in pathes:
+                    if not os.path.exists(p):
+                        logging.info('{} is not exists'.format(path))
+                        raise FileExistsError('{} is not exists'.format(path))
 
-    def _construct_img_queue(self, root_path, batch_size, width, height, sub_path='train'):
+                binary_img_files.append(pathes[0])
+                instance_img_files.append(pathes[1])
+                src_img_files.append(pathes[2])
+        return binary_img_files, instance_img_files, src_img_files
+
+    def _construct_img_queue(self, root_path, batch_size, width, height, sub_path='train_files.txt'):
         img_path = root_path + '/' + sub_path
-        binary_img_files = self._featch_img_paths(img_path + '/' + self._binary_img_path)
-        instance_img_files = self._featch_img_paths(img_path + '/' + self._instance_img_path)
-        src_img_files = self._featch_img_paths(img_path + '/' + self._src_img_path)
+        binary_img_files, instance_img_files, src_img_files = self._featch_img_paths(img_path)
 
         binary_img_tensor = tf.convert_to_tensor(binary_img_files)
         instance_img_tensor = tf.convert_to_tensor(instance_img_files)
@@ -67,7 +80,7 @@ class lanenet(object):
     def train(self, config):
         lannet_net = lanenet_model()
         #train
-        [src_queue, binary_queue, instance_queue], total_files = self._construct_img_queue(config['image_path'], config['batch_size'], 512, 256)
+        [src_queue, binary_queue, instance_queue], total_files = self._construct_img_queue(config['image_path'], config['batch_size'], config['img_width'], config['img_height'])
         binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
         binary_acc, binary_recall = self._accuracy(binary_queue, binary_logits)
 
@@ -99,7 +112,7 @@ class lanenet(object):
         train_summary_op = tf.summary.merge([total_loss_summary])
 
         #valid
-        [test_src_queue, test_binary_queue, test_instance_queue], total_files = self._construct_img_queue(config['image_path'], config['eval_batch_size'], 512, 256, 'test')
+        [test_src_queue, test_binary_queue, test_instance_queue], total_files = self._construct_img_queue(config['image_path'], config['eval_batch_size'], config['img_width'], config['img_height'], 'test_files.txt')
 
         test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], reuse=True)
 
