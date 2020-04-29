@@ -79,56 +79,58 @@ class lanenet(object):
 
     def train(self, config):
         lannet_net = lanenet_model()
-        #train
-        [src_queue, binary_queue, instance_queue], total_files = self._construct_img_queue(config['image_path'], config['batch_size'], config['img_width'], config['img_height'])
-        binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
-        binary_acc, binary_recall = self._accuracy(binary_queue, binary_logits)
+        with tf.device(config['device']):
+            #train
+            [src_queue, binary_queue, instance_queue], total_files = self._construct_img_queue(config['image_path'], config['batch_size'], config['img_width'], config['img_height'])
+            binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
+            binary_acc, binary_recall = self._accuracy(binary_queue, binary_logits)
 
-        feature_dim = instance_queue.get_shape().as_list()
-        instance_queue = tf.reshape(instance_queue, [config['batch_size'], feature_dim[1], feature_dim[2]])
-        embedding_loss, l_var, l_dist, l_reg = discriminative.discriminative_loss_batch(prediction=embedding_logits, correct_label=instance_queue,
-                                                                                        feature_dim=embedding_logits.get_shape().as_list()[3], image_shape=(feature_dim[1], feature_dim[2]),
-                                                                                        delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
-        binary_loss = self.caculate_binary_loss(binary_queue, binary_logits, config['batch_size'])
-        l2_reg_loss = tf.constant(0.0, tf.float32)
-        for vv in tf.trainable_variables():
-            if 'conv2d' in vv.name or 'batch_norm' in vv.name:
-                print(vv.name)
-                l2_reg_loss = tf.add(l2_reg_loss, tf.nn.l2_loss(vv))
-        total_loss = l2_reg_loss*0.001 + binary_loss + embedding_loss*0.05
+            feature_dim = instance_queue.get_shape().as_list()
+            instance_queue = tf.reshape(instance_queue, [config['batch_size'], feature_dim[1], feature_dim[2]])
+            embedding_loss, l_var, l_dist, l_reg = discriminative.discriminative_loss_batch(prediction=embedding_logits, correct_label=instance_queue,
+                                                                                            feature_dim=embedding_logits.get_shape().as_list()[3], image_shape=(feature_dim[1], feature_dim[2]),
+                                                                                            delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
+            binary_loss = self.caculate_binary_loss(binary_queue, binary_logits, config['batch_size'])
+            l2_reg_loss = tf.constant(0.0, tf.float32)
+            for vv in tf.trainable_variables():
+                if 'conv2d' in vv.name or 'batch_norm' in vv.name:
+                    print(vv.name)
+                    l2_reg_loss = tf.add(l2_reg_loss, tf.nn.l2_loss(vv))
+            total_loss = l2_reg_loss*0.001 + binary_loss + embedding_loss*0.05
 
-        global_setp = tf.train.create_global_step()
-        steps_per_epoch = int(total_files / config['batch_size'])
-        decay_steps = config['num_epochs_before_decay'] * steps_per_epoch
-        exponential_decay_learning = tf.train.exponential_decay(learning_rate=config['learning_rate'],
-                                                                global_step=global_setp,
-                                                                decay_rate=config['decay_rate'],
-                                                                decay_steps=decay_steps,
-                                                                staircase=True)
-        optimizer = tf.train.AdamOptimizer(learning_rate=exponential_decay_learning, epsilon=config['epsilon'])
-        train_op = slim.learning.create_train_op(total_loss, optimizer)
+            global_setp = tf.train.create_global_step()
+            steps_per_epoch = int(total_files / config['batch_size'])
+            decay_steps = config['num_epochs_before_decay'] * steps_per_epoch
+            exponential_decay_learning = tf.train.exponential_decay(learning_rate=config['learning_rate'],
+                                                                    global_step=global_setp,
+                                                                    decay_rate=config['decay_rate'],
+                                                                    decay_steps=decay_steps,
+                                                                    staircase=True)
+            optimizer = tf.train.AdamOptimizer(learning_rate=exponential_decay_learning, epsilon=config['epsilon'])
+            train_op = slim.learning.create_train_op(total_loss, optimizer)
 
-        total_loss_summary = tf.summary.scalar(name='total-loss', tensor=total_loss)
-        train_summary_op = tf.summary.merge([total_loss_summary])
+            total_loss_summary = tf.summary.scalar(name='total-loss', tensor=total_loss)
+            train_summary_op = tf.summary.merge([total_loss_summary])
 
-        #valid
-        [test_src_queue, test_binary_queue, test_instance_queue], total_files = self._construct_img_queue(config['image_path'], config['eval_batch_size'], config['img_width'], config['img_height'], 'test_files.txt')
+            #valid
+            [test_src_queue, test_binary_queue, test_instance_queue], total_files = self._construct_img_queue(config['image_path'], config['eval_batch_size'], config['img_width'], config['img_height'], 'test_files.txt')
 
-        test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], reuse=True)
+            test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], reuse=True)
 
-        test_feature_dim = test_instance_queue.get_shape().as_list()
-        test_instance_queue = tf.reshape(test_instance_queue, [config['eval_batch_size'], test_feature_dim[1], test_feature_dim[2]])
-        test_embedding_loss, _, _, _ = discriminative.discriminative_loss_batch(prediction=test_embedding_logits, correct_label=test_instance_queue,
-                                                                                feature_dim=test_embedding_logits.get_shape().as_list()[3], image_shape=(test_feature_dim[1], test_feature_dim[2]),
-                                                                                delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
-        test_binary_loss = self.caculate_binary_loss(test_binary_queue, test_binary_logits, config['eval_batch_size'])
+            test_feature_dim = test_instance_queue.get_shape().as_list()
+            test_instance_queue = tf.reshape(test_instance_queue, [config['eval_batch_size'], test_feature_dim[1], test_feature_dim[2]])
+            test_embedding_loss, _, _, _ = discriminative.discriminative_loss_batch(prediction=test_embedding_logits, correct_label=test_instance_queue,
+                                                                                    feature_dim=test_embedding_logits.get_shape().as_list()[3], image_shape=(test_feature_dim[1], test_feature_dim[2]),
+                                                                                    delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
+            test_binary_loss = self.caculate_binary_loss(test_binary_queue, test_binary_logits, config['eval_batch_size'])
 
-        test_binary_predict = slim.softmax(test_binary_logits)
-        test_embedding_predict = slim.softmax(test_embedding_logits)
-        test_binary_predict = tf.argmax(test_binary_predict, axis=-1)
-        test_embedding_predict = tf.argmax(test_embedding_predict, axis=-1)
+            test_binary_predict = slim.softmax(test_binary_logits)
+            test_embedding_predict = slim.softmax(test_embedding_logits)
+            test_binary_predict = tf.argmax(test_binary_predict, axis=-1)
+            test_embedding_predict = tf.argmax(test_embedding_predict, axis=-1)
+
         saver = tf.train.Saver()
-        with tf.Session() as sess:
+        with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
             sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
 
             summary_writer = tf.summary.FileWriter(config['result_path']+'/summary')

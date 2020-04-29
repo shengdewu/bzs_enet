@@ -22,6 +22,11 @@ class config(object):
         config['skip'] = False
         if skip == 'True':
             config['skip'] = True
+        config['device'] = str(train[0].getElementsByTagName('device')[0].firstChild.data)
+        device_log = str(train[0].getElementsByTagName('device_log')[0].firstChild.data)
+        config['device_log'] = False
+        if device_log == 'True':
+            config['device_log'] = True
 
         optimize = collection.getElementsByTagName('optimize')
         config['learning_rate'] = float(optimize[0].getElementsByTagName('learning_rate')[0].firstChild.data)
