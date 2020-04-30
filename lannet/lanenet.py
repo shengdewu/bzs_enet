@@ -152,15 +152,14 @@ class lanenet(object):
                         logging.info('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
                         min_loss = loss
                         saver.save(sess, config['mode_path'])
+                        test_images, test_binary_images,  test_embedding_images = sess.run([test_src_queue, test_binary_predict,  test_embedding_predict])
+                        self.save_image(config['eval_batch_size'], config['result_path'], test_images, test_binary_images, test_embedding_images)
 
                     if step % max(config['update_mode_freq'], steps_per_epoch) == 0:
                         start_time = time.time()
                         val_embedding_loss, val_binary_loss = sess.run([test_embedding_loss, test_binary_loss])
                         print('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
                         logging.info('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
-
-                test_images, test_binary_images,  test_embedding_images = sess.run([test_src_queue, test_binary_predict,  test_embedding_predict])
-                self.save_image(config['eval_batch_size'], config['result_path'], test_images, test_binary_images, test_embedding_images)
 
             except Exception as err:
                 print('{}'.format(err))
