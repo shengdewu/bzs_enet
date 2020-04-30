@@ -23,6 +23,8 @@ class config(object):
         if skip == 'True':
             config['skip'] = True
         config['device'] = str(train[0].getElementsByTagName('device')[0].firstChild.data)
+        if config['device'] == 'None':
+            config['device'] = None
         device_log = str(train[0].getElementsByTagName('device_log')[0].firstChild.data)
         config['device_log'] = False
         if device_log == 'True':
