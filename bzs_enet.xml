@@ -37,7 +37,7 @@
 	test_files.txt
 	train_files.txt
 	-->
-	    <image_path>D:/work_space/tuSimpleDataSet/lanenet_data/</image_path>
+	    <image_path>D:/work_space/tuSimpleDataSet/training_bzs/</image_path>
 		<result_path>./output</result_path>
         <image_suffix>png</image_suffix>
 		<class_num>12</class_num>
