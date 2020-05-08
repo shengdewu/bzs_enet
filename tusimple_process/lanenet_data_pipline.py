@@ -57,7 +57,7 @@ class lanenet_data_pipline(object):
                     h_samples = lane_dict['h_samples']
                     raw_file = lane_dict['raw_file']
                     file_seg = raw_file.split('/')
-                    file_name = file_seg[-3] + '-' + file_seg[-2]+'-' + file_seg[-1]
+                    file_name = file_seg[-3] + '-' + file_seg[-2]+'-' + file_seg[-1][0:file_seg[-1].rfind('.')]+'.png'
                     image_path = '{}/{}'.format(data_path, raw_file)
                     logging.info('start process image {}'.format(image_path))
 
