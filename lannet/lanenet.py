@@ -77,7 +77,7 @@ class lanenet(object):
 
             l2_reg_loss = tf.losses.get_regularization_loss()
 
-            binary_loss = self.caculate_binary_loss(binary_queue, binary_logits, config['batch_size'])
+            binary_loss = self.caculate_binary_loss(binary_queue, binary_logits)
 
             total_loss = l2_reg_loss + binary_loss + embedding_loss
 
@@ -153,9 +153,9 @@ class lanenet(object):
             coord.join(threads)
         return
 
-    def caculate_binary_loss(self, binary_queue, binary_logits, batch_size):
+    def caculate_binary_loss(self, binary_queue, binary_logits):
         shape = binary_queue.get_shape().as_list()
-        binary_queue = tf.reshape(binary_queue, [batch_size, shape[1], shape[2]])
+        binary_queue = tf.reshape(binary_queue, [shape[0], shape[1], shape[2]])
         binary_onehot_queue = tf.one_hot(binary_queue, 2)
 
         w = weight.inverse_class_probability_weighting(binary_queue, 2)
