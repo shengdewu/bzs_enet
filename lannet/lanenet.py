@@ -77,19 +77,19 @@ class lanenet(object):
 
             l2_reg_loss = tf.losses.get_regularization_loss()
 
-            binary_loss = self.caculate_binary_loss(binary_queue, binary_logits)
+            binary_loss = self.caculate_binary_loss(binary_queue, binary_logits, config['batch_size'])
 
             total_loss = l2_reg_loss + binary_loss + embedding_loss
 
             global_setp = tf.train.create_global_step()
             steps_per_epoch = int(total_files / config['batch_size'])
             decay_steps = config['num_epochs_before_decay'] * steps_per_epoch
-            exponential_decay_learning = tf.train.exponential_decay(learning_rate=config['learning_rate'],
-                                                                    global_step=global_setp,
-                                                                    decay_rate=config['decay_rate'],
-                                                                    decay_steps=decay_steps,
-                                                                    staircase=True)
-            optimizer = tf.train.AdamOptimizer(learning_rate=exponential_decay_learning, epsilon=config['epsilon'])
+            exponential_decay_learning = tf.train.polynomial_decay(learning_rate=config['learning_rate'],
+                                                                   global_step=global_setp,
+                                                                   decay_steps=decay_steps,
+                                                                   power=0.9)
+
+            optimizer = tf.train.MomentumOptimizer(learning_rate=exponential_decay_learning, momentum=config['epsilon'])
             train_op = slim.learning.create_train_op(total_loss, optimizer)
 
             total_loss_summary = tf.summary.scalar(name='total-loss', tensor=total_loss)
@@ -105,7 +105,7 @@ class lanenet(object):
             test_embedding_loss, _, _, _ = discriminative.discriminative_loss_batch(prediction=test_embedding_logits, correct_label=test_instance_queue,
                                                                                     feature_dim=test_embedding_logits.get_shape().as_list()[3], image_shape=(test_feature_dim[1], test_feature_dim[2]),
                                                                                     delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
-            test_binary_loss = self.caculate_binary_loss(test_binary_queue, test_binary_logits)
+            test_binary_loss = self.caculate_binary_loss(test_binary_queue, test_binary_logits, config['eval_batch_size'])
 
             test_binary_predict = slim.softmax(test_binary_logits)
             test_embedding_predict = slim.softmax(test_embedding_logits)
@@ -153,9 +153,9 @@ class lanenet(object):
             coord.join(threads)
         return
 
-    def caculate_binary_loss(self, binary_queue, binary_logits):
+    def caculate_binary_loss(self, binary_queue, binary_logits, batch_size):
         shape = binary_queue.get_shape().as_list()
-        binary_queue = tf.reshape(binary_queue, [shape[0], shape[1], shape[2]])
+        binary_queue = tf.reshape(binary_queue, [batch_size, shape[1], shape[2]])
         binary_onehot_queue = tf.one_hot(binary_queue, 2)
 
         w = weight.inverse_class_probability_weighting(binary_queue, 2)
