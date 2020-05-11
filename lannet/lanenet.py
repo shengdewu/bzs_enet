@@ -105,7 +105,7 @@ class lanenet(object):
             test_embedding_loss, _, _, _ = discriminative.discriminative_loss_batch(prediction=test_embedding_logits, correct_label=test_instance_queue,
                                                                                     feature_dim=test_embedding_logits.get_shape().as_list()[3], image_shape=(test_feature_dim[1], test_feature_dim[2]),
                                                                                     delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
-            test_binary_loss = self.caculate_binary_loss(test_binary_queue, test_binary_logits, config['eval_batch_size'])
+            test_binary_loss = self.caculate_binary_loss(test_binary_queue, test_binary_logits)
 
             test_binary_predict = slim.softmax(test_binary_logits)
             test_embedding_predict = slim.softmax(test_embedding_logits)
