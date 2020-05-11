@@ -75,7 +75,7 @@ class lanenet(object):
                                                                                             feature_dim=embedding_logits.get_shape().as_list()[3], image_shape=(feature_dim[1], feature_dim[2]),
                                                                                             delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
 
-            l2_reg_loss = tf.add_n(slim.losses.get_regularization_losses())
+            l2_reg_loss = tf.losses.get_regularization_loss()
 
             binary_loss = self.caculate_binary_loss(binary_queue, binary_logits, config['batch_size'])
 
