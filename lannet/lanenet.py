@@ -180,7 +180,7 @@ class lanenet(object):
             ax[0].set_title('binary')
             ax[1].imshow(embedding)
             ax[1].set_title('embedding')
-            ax[2].imshow(image)
+            ax[2].imshow(image[...,0])
             ax[2].set_title('img')
             plt.savefig(out_path + '/image' + str(index) + '.png')
             plt.close()
