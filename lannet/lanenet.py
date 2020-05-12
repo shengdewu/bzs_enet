@@ -11,6 +11,7 @@ import time
 import matplotlib.pyplot as plt
 from lannet.evaluate import lanenet_evalute
 import numpy as np
+import cv2
 
 class lanenet(object):
     def __init__(self):
@@ -144,6 +145,8 @@ class lanenet(object):
                         print('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
                         logging.info('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
 
+                print('train finish:min_loss={}'.format(min_loss))
+                logging.info('train finish:min_loss={}'.format(min_loss))
             except Exception as err:
                 print('{}'.format(err))
                 logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
@@ -151,6 +154,25 @@ class lanenet(object):
                 coord.request_stop()
                 coord.join(threads)
             coord.join(threads)
+
+        # print('restore from {}'.format(config['mode_path']))
+        # logging.info('restore from {}'.format(config['mode_path']))
+        # restore = tf.train.Saver()
+        # with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
+        #     restore.restore(sess=sess, save_path=config['mode_path'])
+        #
+        #     coord = tf.train.Coordinator()
+        #     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        #     try:
+        #         test_images, test_binary_images, test_embedding_images = sess.run([test_src_queue, test_binary_predict, test_embedding_predict])
+        #         self.save_image(config['eval_batch_size'], config['result_path'], test_images, test_binary_images, test_embedding_images)
+        #     except Exception as err:
+        #         print('{}'.format(err))
+        #         logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
+        #     finally:
+        #         coord.request_stop()
+        #         coord.join(threads)
+        #     coord.join(threads)
         return
 
     def caculate_binary_loss(self, binary_queue, binary_logits, batch_size):
@@ -175,14 +197,14 @@ class lanenet(object):
             binary = binary_logits_images[index]
             embedding = embedding_logits_images[index]
             image = src_queue_images[index]
-            fig, ax = plt.subplots(1, 3)
-            ax[0].imshow(binary)
-            ax[0].set_title('binary')
-            ax[1].imshow(embedding)
-            ax[1].set_title('embedding')
-            ax[2].imshow(image[...,0])
-            ax[2].set_title('img')
-            plt.savefig(out_path + '/image' + str(index) + '.png')
+
+            fig, ax = plt.subplots(1, 1)
+            ax.imshow(embedding)
+            plt.savefig(out_path + '/' + str(index) + '-embedding.png')
             plt.close()
+
+            cv2.imwrite(out_path + '/' + str(index) + '-image.png', image)
+            cv2.imwrite(out_path + '/' + str(index) + '-binary.png', binary*255)
+            #cv2.imwrite(out_path + '/' + str(index) + '-embedding.png', embedding)
         return
 
