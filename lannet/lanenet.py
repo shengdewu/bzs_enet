@@ -125,9 +125,9 @@ class lanenet(object):
                 min_loss = sys.float_info.max
                 for step in range(config['num_epoch'] * steps_per_epoch):
                     start_time = time.time()
-                    loss, b_loss, e_loss, lg_loss, var, dist, reg, acc, fn, train_summary = sess.run([train_op, binary_loss, embedding_loss, l2_reg_loss,l_var, l_dist, l_reg, binary_acc,binary_fn,train_summary_op])
-                    print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn))
-                    logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn))
+                    loss, b_loss, e_loss, lg_loss, var, dist, reg, acc, fn, train_summary = sess.run([train_op, binary_loss, embedding_loss, l2_reg_loss,l_var, l_dist, l_reg, binary_acc,binary_fn,train_summary_op, exponential_decay_learning])
+                    print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}, learning_ratg/decay_learning={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn, config['learning_rate'],exponential_decay_learning))
+                    logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}, learning_ratg/decay_learning={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn, config['learning_rate'],exponential_decay_learning))
 
                     summary_writer.add_summary(train_summary, global_step=step)
                     if (step+1) % config['update_mode_freq'] == 0 and min_loss > loss:
