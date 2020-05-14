@@ -87,7 +87,7 @@ class lanenet(object):
             exponential_decay_learning = tf.train.polynomial_decay(learning_rate=config['learning_rate'],
                                                                    global_step=global_setp,
                                                                    decay_steps=config['num_epochs_before_decay'],
-                                                                   power=0.9)
+                                                                   power=config['decay_rate'])
 
             optimizer = tf.train.MomentumOptimizer(learning_rate=exponential_decay_learning, momentum=config['epsilon'])
             train_op = slim.learning.create_train_op(total_loss, optimizer)
