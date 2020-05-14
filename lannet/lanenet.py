@@ -84,10 +84,9 @@ class lanenet(object):
 
             global_setp = tf.train.create_global_step()
             steps_per_epoch = int(total_files / config['batch_size'])
-            decay_steps = config['num_epochs_before_decay'] * steps_per_epoch
             exponential_decay_learning = tf.train.polynomial_decay(learning_rate=config['learning_rate'],
                                                                    global_step=global_setp,
-                                                                   decay_steps=decay_steps,
+                                                                   decay_steps=config['num_epochs_before_decay'],
                                                                    power=0.9)
 
             optimizer = tf.train.MomentumOptimizer(learning_rate=exponential_decay_learning, momentum=config['epsilon'])
