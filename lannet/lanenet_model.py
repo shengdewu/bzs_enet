@@ -63,7 +63,7 @@ class lanenet_model(object):
 
                 with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample,
                                      self._enet_block.bottleneck_downsample], drop_prob=0.1), slim.arg_scope(
-                        [self._enet_block.prebn], relu=True):
+                        [self._enet_block.prebn, nn.nn.prelu], relu=True):
                     # stage 4
                     bottleneck = self._enet_block.bottleneck_upsample(bottleneck, output_shape=unpool_indices[1][1],
                                                                       pool_indices=unpool_indices[1][0],

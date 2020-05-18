@@ -1,6 +1,7 @@
 from enet.enet_block import enet_block
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+from enet.nn import nn
 
 class enet(object):
     def __init__(self):
@@ -49,7 +50,7 @@ class enet(object):
                             bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=5, btype='decomposed', scope='bottleneck_{}.7_{}'.format(stage, i))
                             bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=16, scope='bottleneck_{}.8_{}'.format(stage, i))
 
-                with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.1), slim.arg_scope([self._enet_block.prebn], relu=True):
+                with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.1), slim.arg_scope([self._enet_block.prebn, nn.prelu], relu=True):
                     #stage 4
                     bottleneck = self._enet_block.bottleneck_upsample(bottleneck, output_shape=unpool_indices[1][1], pool_indices=unpool_indices[1][0], filter_size=3, scope='bottleneck_4.0')
                     if skip:
