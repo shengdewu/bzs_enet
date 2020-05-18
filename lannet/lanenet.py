@@ -110,8 +110,7 @@ class lanenet(object):
             test_binary_predict = tf.argmax(slim.softmax(test_binary_logits), axis=-1)
 
             input_shape = test_binary_queue.get_shape().as_list()
-            test_binary_queue.set_shape(shape=[config['eval_batch_size'], input_shape[1], input_shape[2], input_shape[3]])
-            test_binary_label = tf.argmax(slim.softmax(tf.cast(test_binary_queue, tf.float32)), axis=-1)
+            test_binary_label = tf.reshape(test_binary_queue, shape=[config['eval_batch_size'], input_shape[1], input_shape[2]])
 
         saver = tf.train.Saver()
         with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
