@@ -101,16 +101,17 @@ class lanenet(object):
             test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], reuse=True)
 
             test_feature_dim = test_instance_queue.get_shape().as_list()
-            test_instance_queue = tf.reshape(test_instance_queue, [config['eval_batch_size'], test_feature_dim[1], test_feature_dim[2]])
-            test_embedding_loss, _, _, _ = discriminative.discriminative_loss_batch(prediction=test_embedding_logits, correct_label=test_instance_queue,
+            test_instance_label = tf.reshape(test_instance_queue, [config['eval_batch_size'], test_feature_dim[1], test_feature_dim[2]])
+            test_embedding_loss, _, _, _ = discriminative.discriminative_loss_batch(prediction=test_embedding_logits, correct_label=test_instance_label,
                                                                                     feature_dim=test_embedding_logits.get_shape().as_list()[3], image_shape=(test_feature_dim[1], test_feature_dim[2]),
                                                                                     delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
             test_binary_loss = self.caculate_binary_loss(test_binary_queue, test_binary_logits, config['eval_batch_size'])
 
-            test_binary_predict = slim.softmax(test_binary_logits)
-            test_embedding_predict = slim.softmax(test_embedding_logits)
-            test_binary_predict = tf.argmax(test_binary_predict, axis=-1)
-            test_embedding_predict = tf.argmax(test_embedding_predict, axis=-1)
+            test_binary_predict = tf.argmax(slim.softmax(test_binary_logits), axis=-1)
+
+            input_shape = test_binary_queue.get_shape().as_list()
+            test_binary_queue.set_shape(shape=[config['eval_batch_size'], input_shape[1], input_shape[2], input_shape[3]])
+            test_binary_label = tf.argmax(slim.softmax(tf.cast(test_binary_queue, tf.float32)), axis=-1)
 
         saver = tf.train.Saver()
         with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
@@ -130,19 +131,20 @@ class lanenet(object):
                     logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}, learning_ratg/decay_learning={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn, config['learning_rate'],learning_rate))
 
                     summary_writer.add_summary(train_summary, global_step=step)
-                    if (step+1) % config['update_mode_freq'] == 0 and min_loss > loss:
+
+                    if step % max(config['update_mode_freq'], steps_per_epoch) == 0 and min_loss > loss:
                         print('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
                         logging.info('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
                         min_loss = loss
                         saver.save(sess, config['mode_path'])
-                        test_images, test_binary_images,  test_embedding_images = sess.run([test_src_queue, test_binary_predict,  test_embedding_predict])
-                        self.save_image(config['eval_batch_size'], config['result_path'], test_images, test_binary_images, test_embedding_images)
 
-                    if step % max(config['update_mode_freq'], steps_per_epoch) == 0:
                         start_time = time.time()
                         val_embedding_loss, val_binary_loss = sess.run([test_embedding_loss, test_binary_loss])
                         print('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
                         logging.info('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
+
+                        test_images, test_binary_images,  test_embedding_images, test_binary_labels, test_instance_labels = sess.run([test_src_queue, test_binary_predict,  test_embedding_logits, test_binary_label, test_instance_label])
+                        self.save_image(config['eval_batch_size'], config['result_path'], test_images, test_binary_labels, test_instance_labels, test_binary_images, test_embedding_images)
 
                 print('train finish:min_loss={}'.format(min_loss))
                 logging.info('train finish:min_loss={}'.format(min_loss))
@@ -185,7 +187,15 @@ class lanenet(object):
         binayr_loss = tf.losses.softmax_cross_entropy(binary_onehot_queue, binary_logits, weights=w)
         return binayr_loss
 
-    def save_image(self, max_index, out_path, src_queue_images, binary_logits_images, embedding_logits_images):
+    def minmax_scale(self, input_arr):
+        min_val = np.min(input_arr)
+        max_val = np.max(input_arr)
+
+        output_arr = (input_arr - min_val) * 255.0 / (max_val - min_val)
+
+        return output_arr
+
+    def save_image(self, max_index, out_path, src_images, binary_label_images, instance_label_images, binary_logits_images, embedding_logits_images):
         if out_path == '':
             return
 
@@ -195,15 +205,17 @@ class lanenet(object):
         for index in range(max_index):
             binary = binary_logits_images[index]
             embedding = embedding_logits_images[index]
-            image = src_queue_images[index]
-
-            fig, ax = plt.subplots(1, 1)
-            ax.imshow(embedding)
-            plt.savefig(out_path + '/' + str(index) + '-embedding.png')
-            plt.close()
+            binary_label = binary_label_images[index]
+            embedding_label = instance_label_images[index]
+            image = src_images[index]
 
             cv2.imwrite(out_path + '/' + str(index) + '-image.png', image)
-            cv2.imwrite(out_path + '/' + str(index) + '-binary.png', binary*255)
-            #cv2.imwrite(out_path + '/' + str(index) + '-embedding.png', embedding)
+            cv2.imwrite(out_path + '/' + str(index) + '-binary-predict.png', binary*255)
+            feature_dim = np.shape(embedding)[-1]
+            for i in range(feature_dim):
+                embedding[:,:,i] = self.minmax_scale(embedding[:,:,i])
+            cv2.imwrite(out_path + '/' + str(index) + '-embedding-predict.png', embedding)
+            cv2.imwrite(out_path + '/' + str(index) + '-binary-label.png', binary_label*255)
+            cv2.imwrite(out_path + '/' + str(index) + '-embedding-label.png', embedding_label)
         return
 
