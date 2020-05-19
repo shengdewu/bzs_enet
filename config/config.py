@@ -16,7 +16,7 @@ class config(object):
         train = collection.getElementsByTagName('train')
         config['batch_size'] = int(train[0].getElementsByTagName('batch_size')[0].firstChild.data)
         config['eval_batch_size'] = int(train[0].getElementsByTagName('eval_batch_size')[0].firstChild.data)
-        config['num_epoch'] = int(train[0].getElementsByTagName('num_epoch')[0].firstChild.data)
+        config['train_epoch'] = int(train[0].getElementsByTagName('train_epoch')[0].firstChild.data)
         config['stage_two_three'] = int(train[0].getElementsByTagName('stage_two_three')[0].firstChild.data)
         skip = str(train[0].getElementsByTagName('skip')[0].firstChild.data)
         config['skip'] = False

@@ -41,9 +41,7 @@ class enet_segment(object):
         images_annot = tf.reshape(images_annot, [batch_size, image_annot_shape[1], image_annot_shape[2]])
         images_onehot = tf.one_hot(images_annot, class_num)
 
-        step_num_per_epoch = int(len(image_files) / batch_size)
-
-        return images, images_annot, images_onehot, step_num_per_epoch
+        return images, images_annot, images_onehot
 
     def create_metrics(self, probabilities, images_annot, class_num):
         predict = tf.argmax(probabilities, axis=-1)
@@ -60,9 +58,9 @@ class enet_segment(object):
     def train(self, network_config):
         logging.info('ready for training, param={}'.format(network_config))
 
-        images, images_annot, images_onehot, step_num_per_epoch = self.construct_image_tensor(network_config['image_path'],
-                                                                                             network_config['batch_size'],
-                                                                                             network_config['class_num'])
+        images, images_annot, images_onehot = self.construct_image_tensor(network_config['image_path'],
+                                                                          network_config['batch_size'],
+                                                                          network_config['class_num'])
 
         with slim.arg_scope(nn.enet_arg_scope(weight_decay=network_config['l2_weight_decay'])):
             logits, probabilities = self._back_bone.building_net(input=images,
@@ -82,16 +80,15 @@ class enet_segment(object):
         accuracy, mean_iou, metrics_op = self.create_metrics(probabilities, images_annot, network_config['class_num'])
 
         global_step = tf.train.get_or_create_global_step()
-        decay_steps = network_config['num_epochs_before_decay'] * step_num_per_epoch
 
-        learning_rate_dec = tf.train.exponential_decay(learning_rate=network_config['learning_rate'], global_step=global_step, decay_steps=decay_steps, decay_rate=network_config['decay_rate'], staircase=True)
+        learning_rate_dec = tf.train.exponential_decay(learning_rate=network_config['learning_rate'], global_step=global_step, decay_steps=network_config['num_epochs_before_decay'], decay_rate=network_config['decay_rate'], staircase=True)
         train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate_dec, epsilon=network_config['epsilon'])
         train_op = slim.learning.create_train_op(total_loss, train_optimizer)
 
-        val_images, val_images_annot,val_images_onehot, val_step_num_per_epoch = self.construct_image_tensor(network_config['image_path'],
-                                                                                                            network_config['eval_batch_size'],
-                                                                                                            network_config['class_num'],
-                                                                                                            'val')
+        val_images, val_images_annot,val_images_onehot = self.construct_image_tensor(network_config['image_path'],
+                                                                                     network_config['eval_batch_size'],
+                                                                                     network_config['class_num'],
+                                                                                     'val')
 
         with slim.arg_scope(nn.enet_arg_scope(weight_decay=network_config['l2_weight_decay'])):
             val_logits, val_probabilities = self._back_bone.building_net(input=val_images,
@@ -114,25 +111,23 @@ class enet_segment(object):
 
             try:
                 min_loss = sys.float_info.max
-                for step in range(step_num_per_epoch * network_config['num_epoch']):
+                for step in range(network_config['train_epoch']):
 
                     start_time = time.time()
                     loss, global_step_cnt, acc, iou, update_op = sess.run([train_op, global_step, accuracy, mean_iou, metrics_op])
                     print('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
                     logging.info('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
 
-                    if step % max(network_config['update_mode_freq'], step_num_per_epoch) == 0:
-                        for i in range(val_step_num_per_epoch):
-                            start_time = time.time()
-                            _, acc, iou = sess.run([val_metrics_op, val_accuracy, val_mean_iou])
-                            print('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
-                            logging.info('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
-
                     if (step+1) % network_config['update_mode_freq'] == 0 and min_loss > loss:
                         print('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
                         logging.info('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
                         min_loss = loss
                         saver.save(sess, network_config['mode_path'])
+
+                        start_time = time.time()
+                        _, acc, iou = sess.run([val_metrics_op, val_accuracy, val_mean_iou])
+                        print('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
+                        logging.info('val epoch:{}({}s)-acc={},iou={}'.format(step, time.time()-start_time, acc, iou))
 
                 logging.info('train finish')
 

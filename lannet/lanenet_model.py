@@ -98,6 +98,11 @@ class lanenet_model(object):
 
             embedding_logits = self.back_backbone(front, skip_net, unpool_indices, 4, "embedding", skip, reuse, is_trainging)
 
-        return binary_logits, embedding_logits
+            with tf.variable_scope(name_or_scope='pix_embedding', reuse=reuse):
+                pix_embedding = slim.conv2d(embedding_logits, 4, [1, 1], stride=1, scope='conv2d')
+                pix_embedding = tf.identity(pix_embedding)
+                pix_embedding = enet.nn.prelu(pix_embedding, 'relu', relu=True)
+
+        return binary_logits, pix_embedding
 
 

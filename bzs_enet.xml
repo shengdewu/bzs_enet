@@ -3,7 +3,7 @@
 	<train>
 		<batch_size>10</batch_size>
 		<eval_batch_size>25</eval_batch_size>
-		<num_epoch>600</num_epoch>
+		<train_epoch>600</train_epoch>
 		<stage_two_three>1</stage_two_three>
 		<skip>True</skip>
 		<device>/cpu:0</device>

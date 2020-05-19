@@ -75,7 +75,6 @@ class lanenet(object):
             embedding_loss, l_var, l_dist, l_reg = discriminative.discriminative_loss_batch(prediction=embedding_logits, correct_label=instance_queue,
                                                                                             feature_dim=embedding_logits.get_shape().as_list()[3], image_shape=(feature_dim[1], feature_dim[2]),
                                                                                             delta_v=self.delta_v, delta_d=self.delta_d, param_var=1.0, param_dist=1.0, param_reg=0.001)
-
             l2_reg_loss = tf.losses.get_regularization_loss()
 
             binary_loss = self.caculate_binary_loss(binary_queue, binary_logits, config['batch_size'])
@@ -83,7 +82,6 @@ class lanenet(object):
             total_loss = l2_reg_loss + binary_loss + embedding_loss
 
             global_setp = tf.train.create_global_step()
-            steps_per_epoch = int(total_files / config['batch_size'])
             exponential_decay_learning = tf.train.polynomial_decay(learning_rate=config['learning_rate'],
                                                                    global_step=global_setp,
                                                                    decay_steps=config['num_epochs_before_decay'],
@@ -123,7 +121,7 @@ class lanenet(object):
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
             try:
                 min_loss = sys.float_info.max
-                for step in range(config['num_epoch'] * steps_per_epoch):
+                for step in range(config['train_epoch']):
                     start_time = time.time()
                     loss, b_loss, e_loss, lg_loss, var, dist, reg, acc, fn, learning_rate,train_summary = sess.run([train_op, binary_loss, embedding_loss, l2_reg_loss,l_var, l_dist, l_reg, binary_acc,binary_fn,exponential_decay_learning,train_summary_op])
                     print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}, learning_ratg/decay_learning={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn, config['learning_rate'],learning_rate))
@@ -131,7 +129,7 @@ class lanenet(object):
 
                     summary_writer.add_summary(train_summary, global_step=step)
 
-                    if step % max(config['update_mode_freq'], steps_per_epoch) == 0 and min_loss > loss:
+                    if step % config['update_mode_freq'] == 0 and min_loss > loss:
                         print('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
                         logging.info('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
                         min_loss = loss
