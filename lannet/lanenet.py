@@ -62,11 +62,13 @@ class lanenet(object):
         return tf.train.batch([src_img, binary_img, instance_img], batch_size=batch_size, allow_smaller_final_batch=True), len(binary_img_files)
 
     def train(self, config):
+        logging.info('ready for training, param={}'.format(config))
+        print('ready for training, param={}'.format(config))
         lannet_net = lanenet_model()
         with tf.device(config['device']):
             #train
             [src_queue, binary_queue, instance_queue], total_files = self._construct_img_queue(config['image_path'], config['batch_size'], config['img_width'], config['img_height'])
-            binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'])
+            binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'], skip=config['skip'])
             binary_acc = lanenet_evalute.accuracy(binary_queue, binary_logits)
             binary_fn = lanenet_evalute.fn(binary_queue, binary_logits)
 
@@ -96,7 +98,7 @@ class lanenet(object):
             #valid
             [test_src_queue, test_binary_queue, test_instance_queue], total_files = self._construct_img_queue(config['image_path'], config['eval_batch_size'], config['img_width'], config['img_height'], 'test_files.txt')
 
-            test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], reuse=True)
+            test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'], reuse=True)
 
             test_feature_dim = test_instance_queue.get_shape().as_list()
             test_instance_label = tf.reshape(test_instance_queue, [config['eval_batch_size'], test_feature_dim[1], test_feature_dim[2]])
