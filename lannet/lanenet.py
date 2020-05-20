@@ -190,9 +190,10 @@ class lanenet(object):
         min_val = np.min(input_arr)
         max_val = np.max(input_arr)
 
-        output_arr = (input_arr - min_val) * 255.0 / (max_val - min_val)
+        if max_val - min_val == 0:
+            return input_arr
 
-        return output_arr
+        return (input_arr - min_val) * 255.0 / (max_val - min_val)
 
     def save_image(self, max_index, out_path, src_images, binary_label_images, instance_label_images, binary_logits_images, embedding_logits_images):
         if out_path == '':
