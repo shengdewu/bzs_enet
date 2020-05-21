@@ -13,7 +13,7 @@ from lannet.evaluate import lanenet_evalute
 import numpy as np
 import cv2
 
-class lanenet(object):
+class lanenet_train(object):
     def __init__(self):
         self.delta_v = 0.5
         self.delta_d = 3.0
