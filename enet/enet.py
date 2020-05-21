@@ -94,8 +94,8 @@ class enet(object):
                 bottleneck = self._enet_model.enet_four_stage(bottleneck, unpool_indices, skip_net, skip)
                 bottleneck = self._enet_model.enet_five_stage(bottleneck, unpool_indices, skip_net, skip)
 
-                #full conv
-                logits = slim.conv2d_transpose(bottleneck, num_outputs=c, kernel_size=[2,2], stride=2, scope='fullconv')
-                probabilities = slim.softmax(logits, scope='probabilities')
+            #full conv
+            logits = slim.conv2d_transpose(bottleneck, num_outputs=c, kernel_size=[2,2], stride=2, scope='fullconv')
+            probabilities = slim.softmax(logits, scope='probabilities')
 
         return logits, probabilities
