@@ -1,4 +1,3 @@
-from enet import enet
 from enet.enet_block import enet_block
 import tensorflow.contrib.slim as slim
 import tensorflow as tf
@@ -7,7 +6,6 @@ from enet import enet_model
 
 class lanenet_model(object):
     def __init__(self):
-        self._enet_block = enet_block()
         self._enet_model = enet_model.enet_model()
         return
 
@@ -15,14 +13,12 @@ class lanenet_model(object):
         input_shape = input.get_shape().as_list()
         input.set_shape(shape=[batch_size, input_shape[1], input_shape[2], input_shape[3]])
 
+        skip_net = list()
+        unpool_indices = list()
+
         with tf.variable_scope(name_or_scope=scope, reuse=reuse):
             with slim.arg_scope([slim.conv2d_transpose, slim.conv2d], activation_fn=None), slim.arg_scope([enet_block.prebn], fused=True, is_training=is_training):
-                skip_net = list()
-                unpool_indices = list()
-
-                initial = self._enet_block.initial_block(input, scope='initial_block')
-                skip_net.append(initial)
-
+                initial = self._enet_model.enent_init_stage(input, skip_net)
                 bottleneck = self._enet_model.enet_one_stage(initial, unpool_indices, skip_net)
                 bottleneck = self._enet_model.enet_two_0_stage(bottleneck, unpool_indices, skip_net)
                 bottleneck = self._enet_model.enet_tow_three_stage(bottleneck, 1, 2)

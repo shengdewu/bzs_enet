@@ -8,6 +8,11 @@ class enet_model(object):
         self._enet_block = enet_block()
         return
 
+    def enent_init_stage(self, input, skip_net):
+        initial = self._enet_block.initial_block(input, scope='initial_block')
+        skip_net.append(initial)
+        return initial
+
     def enet_one_stage(self, initial, unpool_indices, skip_net):
         with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.01):
             # stage 1
@@ -28,9 +33,9 @@ class enet_model(object):
             unpool_indices.append((pool_indices, up_pool.get_shape().as_list()))
         return bottleneck
 
-    def enet_tow_three_stage(self, bottleneck, stage_two_three, stage):
+    def enet_tow_three_stage(self, bottleneck, stage_repeat, stage):
         with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.1):
-            for i in range(stage_two_three):  # repeat section 2, without bottleneck2.0 that is refrence papers
+            for i in range(stage_repeat):  # repeat section 2, without bottleneck2.0 that is refrence papers
                 bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, scope='bottleneck_{}.1_{}'.format(stage, i))
                 bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=2, scope='bottleneck_{}.2_{}'.format(stage, i))
                 bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=5, btype='decomposed', scope='bottleneck_{}.3_{}'.format(stage, i))
