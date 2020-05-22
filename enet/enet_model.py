@@ -35,7 +35,7 @@ class enet_model(object):
 
     def enet_tow_three_stage(self, bottleneck, stage_repeat, stage):
         with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.1):
-            for i in range(stage_repeat):  # repeat section 2, without bottleneck2.0 that is refrence papers
+            for i in range(max(1,stage_repeat)):  # repeat section 2, without bottleneck2.0 that is refrence papers
                 bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, scope='bottleneck_{}.1_{}'.format(stage, i))
                 bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=2, scope='bottleneck_{}.2_{}'.format(stage, i))
                 bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=5, btype='decomposed', scope='bottleneck_{}.3_{}'.format(stage, i))
