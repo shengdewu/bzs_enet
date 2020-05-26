@@ -89,8 +89,9 @@ class enet(object):
 
                 bottleneck = self._enet_model.enet_one_stage(initial, unpool_indices, skip_net)
                 bottleneck = self._enet_model.enet_two_0_stage(bottleneck, unpool_indices, skip_net)
-                bottleneck = self._enet_model.enet_tow_three_stage(bottleneck, stage_two_three, 2)
-                bottleneck = self._enet_model.enet_tow_three_stage(bottleneck, stage_two_three, 3)
+                for i in range(stage_two_three):
+                    for stage in range(2, 4, 1):
+                        bottleneck = self._enet_model.enet_tow_three_stage(bottleneck, stage, i)
                 bottleneck = self._enet_model.enet_four_stage(bottleneck, unpool_indices, skip_net, skip)
                 bottleneck = self._enet_model.enet_five_stage(bottleneck, unpool_indices, skip_net, skip)
 

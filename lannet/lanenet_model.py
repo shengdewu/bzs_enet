@@ -21,14 +21,14 @@ class lanenet_model(object):
                 initial = self._enet_model.enent_init_stage(input, skip_net)
                 bottleneck = self._enet_model.enet_one_stage(initial, unpool_indices, skip_net)
                 bottleneck = self._enet_model.enet_two_0_stage(bottleneck, unpool_indices, skip_net)
-                bottleneck = self._enet_model.enet_tow_three_stage(bottleneck, 1, 2)
+                bottleneck = self._enet_model.enet_tow_three_stage(bottleneck, 2, 0)
 
         return bottleneck, skip_net, unpool_indices
 
     def back_backbone(self, input, skip_net, unpool_indices, c, scope, skip=False, reuse=None, is_training=True):
         with tf.variable_scope(name_or_scope=scope, reuse=reuse):
             with slim.arg_scope([slim.conv2d_transpose, slim.conv2d], activation_fn=None), slim.arg_scope([enet_block.prebn], fused=True, is_training=is_training):
-                bottleneck = self._enet_model.enet_tow_three_stage(input, 1, 3)
+                bottleneck = self._enet_model.enet_tow_three_stage(input, 3, 0)
                 bottleneck = self._enet_model.enet_four_stage(bottleneck, unpool_indices, skip_net, skip)
                 bottleneck = self._enet_model.enet_five_stage(bottleneck, unpool_indices, skip_net, skip)
 

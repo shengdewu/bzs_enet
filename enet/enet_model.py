@@ -33,17 +33,22 @@ class enet_model(object):
             unpool_indices.append((pool_indices, up_pool.get_shape().as_list()))
         return bottleneck
 
-    def enet_tow_three_stage(self, bottleneck, stage_repeat, stage):
+    def enet_tow_three_stage(self, bottleneck, stage, i):
+        '''
+         repeat section 2, without bottleneck2.0 that is refrence papers
+        :param bottleneck:
+        :param stage:
+        :return:
+        '''
         with slim.arg_scope([self._enet_block.bottleneck, self._enet_block.bottleneck_upsample, self._enet_block.bottleneck_downsample], drop_prob=0.1):
-            for i in range(max(1,stage_repeat)):  # repeat section 2, without bottleneck2.0 that is refrence papers
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, scope='bottleneck_{}.1_{}'.format(stage, i))
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=2, scope='bottleneck_{}.2_{}'.format(stage, i))
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=5, btype='decomposed', scope='bottleneck_{}.3_{}'.format(stage, i))
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=4, scope='bottleneck_{}.4_{}'.format(stage, i))
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, scope='bottleneck_{}.5_{}'.format(stage, i))
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=8, scope='bottleneck_{}.6_{}'.format(stage, i))
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=5, btype='decomposed', scope='bottleneck_{}.7_{}'.format(stage, i))
-                bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=16, scope='bottleneck_{}.8_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, scope='bottleneck_{}.1_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=2, scope='bottleneck_{}.2_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=5, btype='decomposed', scope='bottleneck_{}.3_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=4, scope='bottleneck_{}.4_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, scope='bottleneck_{}.5_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=8, scope='bottleneck_{}.6_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=5, btype='decomposed', scope='bottleneck_{}.7_{}'.format(stage, i))
+            bottleneck = self._enet_block.bottleneck(bottleneck, output_depth=128, filter_size=3, btype='dilation', dilation_rate=16, scope='bottleneck_{}.8_{}'.format(stage, i))
         return bottleneck
 
     def enet_four_stage(self, bottleneck, unpool_indices, skip_net, skip):
