@@ -126,6 +126,52 @@ class lanenet_data_pipline(object):
                 thandle.write(total_files[index][0]+' '+total_files[index][1]+' '+total_files[index][2]+'\n')
 
         return
+    
+    def generate_test_data(self, data_path):
+        '''
+         生成测试数据 txt
+         :param data_path: tuSimple 数据集路径
+         :return:
+         '''
+
+        if not os.path.exists(data_path):
+            raise FileExistsError('{} not find data path'.format(data_path))
+
+        json_files = [f for f in os.listdir(data_path) if f.endswith('.json')]
+
+        if len(json_files) < 0:
+            raise FileExistsError('{} not exists json files'.format(data_path))
+
+        src_file_name = set()
+
+        for jfile in json_files:
+            logging.info('start process json file: {}'.format(jfile))
+            with open(data_path + '/' + jfile, 'r') as handle:
+                while True:
+                    line = handle.readline()
+                    if not line:
+                        break
+                    line = line.strip('\n')
+                    lane_dict = json.loads(line)
+                    raw_file = lane_dict['raw_file']
+                    image_path = '{}/{}'.format(data_path, raw_file)
+                    logging.info('start process image {}'.format(image_path))
+
+                    if not os.path.exists(image_path):
+                        logging.warning('{} not exists'.format(image_path))
+                        continue
+
+                    if image_path in src_file_name:
+                        logging.warning('{} is exists'.format(image_path))
+                        raise FileExistsError('{} is exists'.format(image_path))
+
+                    src_file_name.add(image_path)
+
+        with open(data_path + '/test_files.txt', 'w') as thandle:
+            for file_name in src_file_name:
+                thandle.write(file_name + '\n')
+        return
+    
 
 if __name__ == '__main__':
     lanenet_data_provide = lanenet_data_pipline()
