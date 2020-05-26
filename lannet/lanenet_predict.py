@@ -19,7 +19,7 @@ class lanenet_train(object):
         print('ready for infer, param={}'.format(config))
         lannet_net = lanenet_model()
         img_queue = lannet.img_queue.img_queue(config['image_path'] + '/test_files.txt')
-
+        #img_queue.next_batch(config['eval_batch_size'],config['img_width'], config['img_height'])
         with tf.device(config['device']):
 
             lanenet_image = tf.placeholder(tf.float32, shape=[None, config['img_width'], config['img_height'], 3])
@@ -33,7 +33,7 @@ class lanenet_train(object):
         with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
             restore.restore(sess=sess, save_path=config['mode_path'])
 
-            while not img_queue.is_empty():
+            while img_queue.is_continue(config['eval_batch_size']):
                 try:
                     binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={lanenet_image, img_queue.next_batch(config['eval_batch_size'],config['img_width'], config['img_height'])})
                     fuse_image = np.multiply(binary_image, pix_embedding)

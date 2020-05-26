@@ -1,5 +1,7 @@
 import os
 import logging
+import numpy as np
+import cv2
 
 class img_queue(object):
     def __init__(self, src_path):
@@ -26,7 +28,17 @@ class img_queue(object):
     def is_empty(self):
         return len(self._img_queue) == 0
 
+    def is_continue(self, batch):
+        return len(self._img_queue) > self._start_index + batch
+
     def next_batch(self, batch, img_width, img_height):
         start = self._start_index
         self._start_index = self._start_index + batch
-        return self._img_queue[start: self._start_index]
+        files = self._img_queue[start: self._start_index]
+        imgs = list()
+        for f in files:
+            img = cv2.imread(f)
+            img_resize = cv2.resize(img, img_width, img_height)
+            imgs.append(img_resize)
+            del img
+        return np.array(imgs)
