@@ -31,6 +31,9 @@ class img_queue(object):
     def is_continue(self, batch):
         return len(self._img_queue) > self._start_index + batch
 
+    def batch(self):
+        return self._start_index
+
     def next_batch(self, batch, img_width, img_height):
         start = self._start_index
         self._start_index = self._start_index + batch

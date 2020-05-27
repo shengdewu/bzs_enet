@@ -39,7 +39,7 @@ class lanenet_predict(object):
                 try:
                     lanenet_batch = img_queue.next_batch(config['eval_batch_size'],config['img_width'], config['img_height'])
                     binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={lanenet_image: lanenet_batch})
-                    self.save_image(config['result_path'], lanenet_batch, binary_image, pix_embedding)
+                    self.save_image(img_queue.batch(), config['result_path'], lanenet_batch, binary_image, pix_embedding)
                 except Exception as err:
                     print('{}'.format(err))
                     logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
@@ -55,29 +55,31 @@ class lanenet_predict(object):
 
         return (input_arr - min_val) * 255.0 / (max_val - min_val)
 
-    def save_image(self, out_path, src_images, binary_images, pix_embedding):
+    def save_image(self, indice, out_path, src_images, binary_images, pix_embedding):
         if out_path == '':
             return
 
         if not os.path.exists(out_path):
             os.makedirs(out_path)
 
+        save_path = out_path + '/' + str(indice)
+
         for index in range(np.shape(src_images)[0]):
             binary = binary_images[index]
             embedding = pix_embedding[index]
             image = src_images[index]
 
-            cv2.imwrite(out_path + '/' + str(index) + 'src-image.png', image)
-            cv2.imwrite(out_path + '/' + str(index) + 'binary-predict.png', binary*255)
+            cv2.imwrite(save_path + '-' + str(index) + '-src-image.png', image)
+            cv2.imwrite(save_path + '-' + str(index) + '-binary-predict.png', binary*255)
             feature_dim = np.shape(embedding)[-1]
             for i in range(feature_dim):
                 embedding[:,:,i] = self.minmax_scale(embedding[:,:,i])
 
-            cv2.imwrite(out_path + '/' + str(index) + 'embedding-predict.png', embedding)
+            cv2.imwrite(save_path + '-' + str(index) + '-embedding-predict.png', embedding)
 
-            cv2.imshow('src', image)
-            cv2.imshow('binary', (binary*255).astype(np.int8))
-            cv2.imshow('embedding', embedding.astype(np.int8))
-            cv2.waitKey()
+            # cv2.imshow('src', image)
+            # cv2.imshow('binary', (binary*255).astype(np.int8))
+            # cv2.imshow('embedding', embedding.astype(np.int8))
+            # cv2.waitKey()
         return
 
