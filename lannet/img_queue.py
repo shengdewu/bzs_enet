@@ -38,7 +38,7 @@ class img_queue(object):
         imgs = list()
         for f in files:
             img = cv2.imread(f)
-            img_resize = cv2.resize(img, img_width, img_height)
+            img_resize = cv2.resize(img, (img_width, img_height))
             imgs.append(img_resize)
             del img
         return np.array(imgs)
