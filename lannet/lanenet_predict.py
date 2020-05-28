@@ -26,7 +26,7 @@ class lanenet_predict(object):
 
             lanenet_image = tf.placeholder(tf.float32, shape=[None, config['img_height'], config['img_width'], 3])
 
-            binary_image_predict, pix_embedding_predict = lannet_net.build_net(lanenet_image, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'], is_trainging=False)
+            binary_image_predict, pix_embedding_predict = lannet_net.build_net(lanenet_image, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'])
             binary_image_predict = tf.argmax(slim.softmax(binary_image_predict), axis=-1)
             
         print('restore from {}'.format(config['mode_path']))
@@ -36,6 +36,7 @@ class lanenet_predict(object):
             restore.restore(sess=sess, save_path=config['mode_path'])
 
             while img_queue.is_continue(config['eval_batch_size']):
+                print('predict {}'.format(img_queue.batch()))
                 try:
                     lanenet_batch = img_queue.next_batch(config['eval_batch_size'],config['img_width'], config['img_height'])
                     binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={lanenet_image: lanenet_batch})
