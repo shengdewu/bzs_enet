@@ -96,7 +96,8 @@ class enet_train(object):
                                                                         c=network_config['class_num'],
                                                                         stage_two_three=network_config['stage_two_three'],
                                                                         skip=network_config['skip'],
-                                                                        reuse=True)
+                                                                        reuse=True,
+                                                                         is_trainging=False)
 
         val_accuracy, val_mean_iou, val_metrics_op = self.create_metrics(val_probabilities, val_images_annot, network_config['class_num'])
         val_predict = tf.argmax(val_probabilities, axis=-1)
@@ -114,9 +115,9 @@ class enet_train(object):
                 for step in range(network_config['train_epoch']):
 
                     start_time = time.time()
-                    loss, global_step_cnt, acc, iou, update_op = sess.run([train_op, global_step, accuracy, mean_iou, metrics_op])
-                    print('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
-                    logging.info('train epoch:{}({}s)-loss={},acc={},iou={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou))
+                    loss, global_step_cnt, acc, iou, update_op, learning_rate = sess.run([train_op, global_step, accuracy, mean_iou, metrics_op, learning_rate_dec])
+                    print('train epoch:{}({}s)-loss={},acc={},iou={},learning_rate={}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou, learning_rate))
+                    logging.info('train epoch:{}({}s)-loss={},acc={},iou={}, learning_rat{}'.format(global_step_cnt, time.time()-start_time, loss, acc, iou, learning_rate))
 
                     if (step+1) % network_config['update_mode_freq'] == 0 and min_loss > loss:
                         print('save sess to {}, loss from {} to {}'.format(network_config['mode_path'], min_loss, loss))
