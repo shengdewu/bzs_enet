@@ -7,6 +7,7 @@ import traceback
 import numpy as np
 import cv2
 import lannet.img_queue
+import time
 
 class lanenet_predict(object):
     def __init__(self):
@@ -36,10 +37,11 @@ class lanenet_predict(object):
             restore.restore(sess=sess, save_path=config['mode_path'])
 
             while img_queue.is_continue(config['eval_batch_size']):
-                print('predict {}'.format(img_queue.batch()))
                 try:
-                    lanenet_batch = img_queue.next_batch(config['eval_batch_size'],config['img_width'], config['img_height'])
+                    start = time.time()
+                    lanenet_batch = img_queue.next_batch(config['eval_batch_size'], config['img_width'], config['img_height'])
                     binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={lanenet_image: lanenet_batch})
+                    print('predict {} cost {}/s'.format(img_queue.batch(), time.time()-start))
                     self.save_image(img_queue.batch(), config['result_path'], lanenet_batch, binary_image, pix_embedding)
                 except Exception as err:
                     print('{}'.format(err))
