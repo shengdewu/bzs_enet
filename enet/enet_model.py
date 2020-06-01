@@ -8,9 +8,8 @@ class enet_model(object):
         self._enet_block = enet_block()
         return
 
-    def enent_init_stage(self, input, skip_net):
+    def enent_init_stage(self, input):
         initial = self._enet_block.initial_block(input, scope='initial_block')
-        skip_net.append(initial)
         return initial
 
     def enet_one_stage(self, initial, unpool_indices, skip_net):

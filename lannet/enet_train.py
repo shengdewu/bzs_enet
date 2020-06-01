@@ -10,6 +10,19 @@ import sys
 import logging
 import traceback
 
+"""
+train config:
+      init learning rate = 0.0005
+      decay rate = 0.99
+      decay steps = 300
+      adam epsilon = 0.00000001
+      weight decay = 0.001 
+      batch size = 10
+      
+      img width = 480
+      img height = 360
+      class num = 12
+"""
 class enet_train(object):
     def __init__(self):
         self._back_bone = enet()
@@ -81,7 +94,7 @@ class enet_train(object):
 
         global_step = tf.train.get_or_create_global_step()
 
-        learning_rate_dec = tf.train.exponential_decay(learning_rate=network_config['learning_rate'], global_step=global_step, decay_steps=network_config['num_epochs_before_decay'], decay_rate=network_config['decay_rate'], staircase=True)
+        learning_rate_dec = tf.train.exponential_decay(learning_rate=network_config['learning_rate'], global_step=global_step, decay_steps=network_config['num_epochs_before_decay'], decay_rate=network_config['decay_rate'])
         train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate_dec, epsilon=network_config['epsilon'])
         train_op = slim.learning.create_train_op(total_loss, train_optimizer)
 
