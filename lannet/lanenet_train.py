@@ -13,6 +13,14 @@ from lannet.evaluate import lanenet_evalute
 import numpy as np
 import cv2
 
+"""
+learning rate 0.001
+decay rate 0.1
+epsilon 0.99
+l2 weigth decay 0.001
+img width 512
+img height 256
+"""
 class lanenet_train(object):
     def __init__(self):
         self.delta_v = 0.5
@@ -126,20 +134,17 @@ class lanenet_train(object):
                 for step in range(config['train_epoch']):
                     start_time = time.time()
                     loss, b_loss, e_loss, lg_loss, var, dist, reg, acc, fn, learning_rate,train_summary = sess.run([train_op, binary_loss, embedding_loss, l2_reg_loss,l_var, l_dist, l_reg, binary_acc,binary_fn,exponential_decay_learning,train_summary_op])
-                    print('train epoch:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}, learning_ratg/decay_learning={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn, config['learning_rate'],learning_rate))
                     logging.info('train:{}({}s)-total_loss={},embedding_loss={},binary_loss={}, leg_loss={}, binary_acc/binary_fn={},{}, learning_ratg/decay_learning={},{}'.format(step, time.time() - start_time, loss, e_loss, b_loss, lg_loss,acc, fn, config['learning_rate'],learning_rate))
 
                     summary_writer.add_summary(train_summary, global_step=step)
 
-                    if step % config['update_mode_freq'] == 0 and min_loss > loss:
-                        print('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
+                    if step % config['update_mode_freq'] == 0:
                         logging.info('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
                         min_loss = loss
                         saver.save(sess, config['mode_path'])
 
                         start_time = time.time()
                         val_embedding_loss, val_binary_loss = sess.run([test_embedding_loss, test_binary_loss])
-                        print('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
                         logging.info('val epoch:{}({}s)-embedding_loss={},binary_loss={}'.format(step, time.time()-start_time, val_embedding_loss, val_binary_loss))
 
                         test_images, test_binary_images,  test_embedding_images, test_binary_labels, test_instance_labels = sess.run([test_src_queue, test_binary_predict,  test_embedding_logits, test_binary_label, test_instance_label])
