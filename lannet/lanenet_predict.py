@@ -8,6 +8,8 @@ import numpy as np
 import cv2
 import lannet.img_queue
 import time
+import pandas as pd
+from sklearn.cluster import MeanShift
 
 class lanenet_predict(object):
     def __init__(self):
@@ -42,7 +44,7 @@ class lanenet_predict(object):
                     lanenet_batch = img_queue.next_batch(config['eval_batch_size'], config['img_width'], config['img_height'])
                     binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={lanenet_image: lanenet_batch})
                     print('predict {} cost {}/s'.format(img_queue.batch(), time.time()-start))
-                    self.save_image(img_queue.batch(), config['result_path'], lanenet_batch, binary_image, pix_embedding)
+                    self.post_processing(img_queue.batch(), config['result_path'], lanenet_batch, binary_image, pix_embedding)
                 except Exception as err:
                     print('{}'.format(err))
                     logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
@@ -58,7 +60,34 @@ class lanenet_predict(object):
 
         return (input_arr - min_val) * 255.0 / (max_val - min_val)
 
-    def save_image(self, indice, out_path, src_images, binary_images, pix_embedding):
+    def cluster(self, binary_image, pix_embedding, max_center=4):
+        embedding_value, coordinate = self.get_lanenet(binary_image, pix_embedding)
+        cluster = MeanShift(bandwidth=1.0)
+        cluster.fit(embedding_value)
+        labels = cluster.labels_
+        center = cluster.cluster_centers_
+
+        kmeans = center.shape[0]
+
+        cluster_index = list(np.unique(labels))
+        if kmeans > max_center:
+            cluster_index.clear()
+            label_cnt = dict()
+            for index in range(kmeans):
+                idx = np.where(labels == index)
+                label_cnt[index] = len(idx[0])
+            sort_label_cnt = sorted(label_cnt.items(), key=lambda a:a[1], reverse=True)
+            for slc in sort_label_cnt[0: max_center]:
+                cluster_index.append(slc[0])
+
+        cluster_coordinate = list()
+        for c in cluster_index:
+            idx = np.where(labels == c)[0]
+            cluster_coordinate.append(coordinate[idx])
+        return cluster_coordinate
+
+    def post_processing(self, indice, out_path, src_imgs, binary_imgs, pix_embeddings, max_center=6):
+
         if out_path == '':
             return
 
@@ -67,22 +96,35 @@ class lanenet_predict(object):
 
         save_path = out_path + '/' + str(indice)
 
-        for index in range(np.shape(src_images)[0]):
-            binary = binary_images[index]
-            embedding = pix_embedding[index]
-            image = src_images[index]
+        color = int(255 / max_center)
+        for batch in range(np.shape(src_imgs)[0]):
+            binary = binary_imgs[batch]
+            embedding = pix_embeddings[batch]
+            image = src_imgs[batch]
+            cluster_coordinate = self.cluster(binary, embedding, max_center)
+            img_shape = image.shape
+            mask = np.zeros(shape=(img_shape[0], img_shape[1]))
+            for i, cc in enumerate(cluster_coordinate):
+                for c in cc:
+                    mask[c[0], c[1]] = (i+1) * color
 
-            cv2.imwrite(save_path + '-' + str(index) + '-src-image.png', image)
-            cv2.imwrite(save_path + '-' + str(index) + '-binary-predict.png', binary*255)
+            cv2.imwrite(save_path + '-' + str(indice) + '-mask.png', mask)
+            cv2.imwrite(save_path + '-' + str(indice) + '-image.png', image)
+            cv2.imwrite(save_path + '-' + str(indice) + '-binary-predict.png', binary * 255)
             feature_dim = np.shape(embedding)[-1]
             for i in range(feature_dim):
                 embedding[:,:,i] = self.minmax_scale(embedding[:,:,i])
-
-            cv2.imwrite(save_path + '-' + str(index) + '-embedding-predict.png', embedding)
-
-            # cv2.imshow('src', image)
-            # cv2.imshow('binary', (binary*255).astype(np.int8))
-            # cv2.imshow('embedding', embedding.astype(np.int8))
-            # cv2.waitKey()
+            cv2.imwrite(save_path + '-' + str(indice) + '-embedding-predict.png', embedding)
         return
+
+    def get_lanenet(self, binary_img, pix_embedding):
+        idx = np.where(binary_img == 1)
+        coordinate = list()
+        embedding = list()
+        for i in range(len(idx[0])):
+            embedding.append(pix_embedding[idx[0][i], idx[1][i]])
+            coordinate.append((idx[0][i], idx[1][i]))
+        return np.array(embedding, np.float), np.array(coordinate, np.int)
+
+
 
