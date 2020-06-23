@@ -1,7 +1,7 @@
 import sys
 from config.config import config
 from log.log_configure import log_configure
-from lannet.lanenet_train import lanenet_train
+from lanenet.lanenet_train import lanenet_train
 
 if __name__ == '__main__':
     lannet_model = lanenet_train()

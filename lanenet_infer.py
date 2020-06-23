@@ -1,4 +1,4 @@
-from lannet.lanenet_predict import lanenet_predict
+from lanenet.lanenet_predict import lanenet_predict
 from config.config import config
 from log.log_configure import log_configure
 import sys
