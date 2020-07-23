@@ -127,7 +127,7 @@ class lanenet_data_pipline(object):
 
         return
     
-    def generate_test_data(self, data_path):
+    def generate_test_data(self, data_path, output_path):
         '''
          生成测试数据 txt
          :param data_path: tuSimple 数据集路径
@@ -167,7 +167,7 @@ class lanenet_data_pipline(object):
 
                     src_file_name.add(image_path)
 
-        with open(data_path + '/test_files.txt', 'w') as thandle:
+        with open(output_path + '/test_files.txt', 'w') as thandle:
             for file_name in src_file_name:
                 thandle.write(file_name + '\n')
         return
