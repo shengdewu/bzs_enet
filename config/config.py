@@ -32,6 +32,7 @@ class config(object):
 
         optimize = collection.getElementsByTagName('optimize')
         config['learning_rate'] = float(optimize[0].getElementsByTagName('learning_rate')[0].firstChild.data)
+        config['end_learning_rate'] = float(optimize[0].getElementsByTagName('end_learning_rate')[0].firstChild.data)
         config['decay_rate'] = float(optimize[0].getElementsByTagName('decay_rate')[0].firstChild.data)
         config['epsilon'] = float(optimize[0].getElementsByTagName('epsilon')[0].firstChild.data)
         config['num_epochs_before_decay'] = float(optimize[0].getElementsByTagName('num_epochs_before_decay')[0].firstChild.data)

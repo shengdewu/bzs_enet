@@ -11,6 +11,7 @@
 	</train>
     <optimize>
 		<learning_rate>0.0005</learning_rate>
+		<end_learning_rate>0.0005</end_learning_rate>
 		<decay_rate>0.1</decay_rate>
 		<epsilon>0.00000001</epsilon>
 		<num_epochs_before_decay>100</num_epochs_before_decay>

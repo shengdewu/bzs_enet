@@ -95,9 +95,11 @@ class lanenet_train(object):
             exponential_decay_learning = tf.train.polynomial_decay(learning_rate=config['learning_rate'],
                                                                    global_step=global_setp,
                                                                    decay_steps=config['num_epochs_before_decay'],
+                                                                   end_learning_rate=config['end_learning_rate'],
                                                                    power=config['decay_rate'])
 
-            optimizer = tf.train.MomentumOptimizer(learning_rate=exponential_decay_learning, momentum=config['epsilon'])
+            #optimizer = tf.train.MomentumOptimizer(learning_rate=exponential_decay_learning, momentum=config['epsilon'])
+            optimizer = tf.train.AdamOptimizer(learning_rate=exponential_decay_learning, epsilon=config['epsilon'])
             train_op = slim.learning.create_train_op(total_loss, optimizer)
 
             total_loss_summary = tf.summary.scalar(name='total-loss', tensor=total_loss)
@@ -139,7 +141,7 @@ class lanenet_train(object):
                     summary_writer.add_summary(train_summary, global_step=step)
 
                     if step % config['update_mode_freq'] == 0:
-                        logging.info('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
+                        #logging.info('save sess to {}, loss from {} to {}'.format(config['mode_path'], min_loss, loss))
                         min_loss = loss
                         saver.save(sess, config['mode_path'])
 
