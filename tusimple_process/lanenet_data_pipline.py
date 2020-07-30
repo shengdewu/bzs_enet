@@ -114,7 +114,7 @@ class lanenet_data_pipline(object):
                     instance_file_name.add(instance_save_path)
                     src_file_name.add(img_save_path)
 
-                    total_files.append((binary_save_path, instance_save_path, img_save_path))
+                    total_files.append((img_save_path, binary_save_path, instance_save_path))
 
         train_len = math.ceil(len(total_files) * rate)
         with open(out_path+'/train_files.txt', 'w') as thandle:

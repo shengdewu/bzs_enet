@@ -43,9 +43,10 @@ class lanenet_train(object):
                         logging.info('{} is not exists'.format(path))
                         raise FileExistsError('{} is not exists'.format(path))
 
-                binary_img_files.append(pathes[0])
-                instance_img_files.append(pathes[1])
-                src_img_files.append(pathes[2])
+                src_img_files.append(pathes[0])
+                binary_img_files.append(pathes[1])
+                instance_img_files.append(pathes[2])
+
         return binary_img_files, instance_img_files, src_img_files
 
     def _construct_img_queue(self, root_path, batch_size, width, height, sub_path='train_files.txt'):
@@ -162,24 +163,6 @@ class lanenet_train(object):
                 coord.join(threads)
             coord.join(threads)
 
-        # print('restore from {}'.format(config['mode_path']))
-        # logging.info('restore from {}'.format(config['mode_path']))
-        # restore = tf.train.Saver()
-        # with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
-        #     restore.restore(sess=sess, save_path=config['mode_path'])
-        #
-        #     coord = tf.train.Coordinator()
-        #     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-        #     try:
-        #         test_images, test_binary_images, test_embedding_images = sess.run([test_src_queue, test_binary_predict, test_embedding_predict])
-        #         self.save_image(config['eval_batch_size'], config['result_path'], test_images, test_binary_images, test_embedding_images)
-        #     except Exception as err:
-        #         print('{}'.format(err))
-        #         logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
-        #     finally:
-        #         coord.request_stop()
-        #         coord.join(threads)
-        #     coord.join(threads)
         return
 
     def caculate_binary_loss(self, binary_queue, binary_logits, batch_size):
