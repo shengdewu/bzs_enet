@@ -119,11 +119,17 @@ class lanenet_data_pipline(object):
         train_len = math.ceil(len(total_files) * rate)
         with open(out_path+'/train_files.txt', 'w') as thandle:
             for index in range(train_len):
-                thandle.write(total_files[index][0]+' '+total_files[index][1]+' '+total_files[index][2]+'\n')
+                img = total_files[index][0]
+                binary = total_files[index][1]
+                instance = total_files[index][2]
+                thandle.write(img[img.rfind('gt_src_img'):]+' '+binary[binary.rfind('gt_binary_img'):]+' '+instance[instance.rfind('gt_instance_img'):]+'\n')
 
         with open(out_path+'/test_files.txt', 'w') as thandle:
             for index in range(train_len+1, len(total_files)):
-                thandle.write(total_files[index][0]+' '+total_files[index][1]+' '+total_files[index][2]+'\n')
+                img = total_files[index][0]
+                binary = total_files[index][1]
+                instance = total_files[index][2]
+                thandle.write(img[img.rfind('gt_src_img'):]+' '+binary[binary.rfind('gt_binary_img'):]+' '+instance[instance.rfind('gt_instance_img'):]+'\n')
 
         return
     

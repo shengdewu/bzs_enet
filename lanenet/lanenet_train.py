@@ -27,17 +27,17 @@ class lanenet_train(object):
         self.delta_d = 3.0
         return
 
-    def _featch_img_paths(self, img_path):
+    def _featch_img_paths(self, file_path, root_path):
         binary_img_files = list()
         instance_img_files = list()
         src_img_files = list()
-        with open(img_path, 'r') as handler:
+        with open(file_path, 'r') as handler:
             while True:
                 line = handler.readline()
                 if not line:
                     break
                 path = line.strip('\n')
-                pathes = path.split(' ')
+                pathes = [root_path+'/'+ p for p in path.split(' ')]
                 for p in pathes:
                     if not os.path.exists(p):
                         logging.info('{} is not exists'.format(path))
@@ -50,8 +50,8 @@ class lanenet_train(object):
         return binary_img_files, instance_img_files, src_img_files
 
     def _construct_img_queue(self, root_path, batch_size, width, height, sub_path='train_files.txt'):
-        img_path = root_path + '/' + sub_path
-        binary_img_files, instance_img_files, src_img_files = self._featch_img_paths(img_path)
+        file_path = root_path + '/' + sub_path
+        binary_img_files, instance_img_files, src_img_files = self._featch_img_paths(file_path, root_path)
 
         binary_img_tensor = tf.convert_to_tensor(binary_img_files)
         instance_img_tensor = tf.convert_to_tensor(instance_img_files)

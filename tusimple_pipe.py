@@ -8,4 +8,7 @@ if __name__ == '__main__':
     if sys.argv[3] == 'test':
         lanenet_data_provide.generate_test_data(tusimple_path, out_path)
     else:
-        lanenet_data_provide.generate_data(tusimple_path, out_path)
+        rate = 0.7
+        if len(sys.argv) == 5:
+            rate = float(sys.argv[4])
+        lanenet_data_provide.generate_data(tusimple_path, out_path, rate)
