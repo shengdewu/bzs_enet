@@ -5,7 +5,7 @@ import numpy as np
 from log import log_configure
 import logging
 import math
-
+import random
 class lanenet_data_pipline(object):
     def __init__(self):
         log_configure.log_configure.init_log('lanenet_data_porcess', os.getcwd()+'/process_data_log')
@@ -115,6 +115,8 @@ class lanenet_data_pipline(object):
                     src_file_name.add(img_save_path)
 
                     total_files.append((img_save_path, binary_save_path, instance_save_path))
+
+        random.shuffle(total_files)
 
         train_len = math.ceil(len(total_files) * rate)
         with open(out_path+'/train_files.txt', 'w') as thandle:
