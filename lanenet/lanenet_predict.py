@@ -101,14 +101,14 @@ class lanenet_predict(object):
             binary = binary_imgs[batch]
             embedding = pix_embeddings[batch]
             image = src_imgs[batch]
-            cluster_coordinate = self.cluster(binary, embedding, max_center)
+            #cluster_coordinate = self.cluster(binary, embedding, max_center)
             img_shape = image.shape
-            mask = np.zeros(shape=(img_shape[0], img_shape[1]))
-            for i, cc in enumerate(cluster_coordinate):
-                for c in cc:
-                    mask[c[0], c[1]] = (i+1) * color
+            # mask = np.zeros(shape=(img_shape[0], img_shape[1]))
+            # for i, cc in enumerate(cluster_coordinate):
+            #     for c in cc:
+            #         mask[c[0], c[1]] = (i+1) * color
 
-            cv2.imwrite(save_path + '-' + str(indice) + '-mask.png', mask)
+            #cv2.imwrite(save_path + '-' + str(indice) + '-mask.png', mask)
             cv2.imwrite(save_path + '-' + str(indice) + '-image.png', image)
             cv2.imwrite(save_path + '-' + str(indice) + '-binary-predict.png', binary * 255)
             feature_dim = np.shape(embedding)[-1]
