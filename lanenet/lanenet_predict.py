@@ -43,7 +43,8 @@ class lanenet_predict(object):
                     start = time.time()
                     lanenet_batch = img_queue.next_batch(config['eval_batch_size'], config['img_width'], config['img_height'])
                     binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={lanenet_image: lanenet_batch})
-                    print('predict {} cost {}/s'.format(img_queue.batch(), time.time()-start))
+                    cost = time.time()-start
+                    print('predict {}/per, cost {}/s, mean cost {}/s'.format(config['eval_batch_size'], cost, cost/config['eval_batch_size']))
                     self.post_processing(img_queue.batch(), config['result_path'], lanenet_batch, binary_image, pix_embedding)
                 except Exception as err:
                     print('{}'.format(err))
