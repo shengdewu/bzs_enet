@@ -21,7 +21,7 @@ class lanenet_predict(object):
         logging.info('ready for infer, param={}'.format(config))
         print('ready for infer, param={}'.format(config))
         lannet_net = lanenet_model()
-        img_queue = lanenet.img_queue.img_queue(config['image_path'] + '/test_files.txt')
+        img_queue = lanenet.img_queue.img_queue(config['image_path'], 'test_files.txt')
         # img_batch = img_queue.next_batch(config['eval_batch_size'],config['img_width'], config['img_height'])
         # cv2.imshow("resize", img_batch[0])
         # cv2.waitKey()
@@ -29,7 +29,7 @@ class lanenet_predict(object):
 
             lanenet_image = tf.placeholder(tf.float32, shape=[None, config['img_height'], config['img_width'], 3])
 
-            binary_image_predict, pix_embedding_predict = lannet_net.build_net(lanenet_image, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'], is_trainging=False)
+            binary_image_predict, pix_embedding_predict = lannet_net.build_net(lanenet_image, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'], is_trainging=True)
             binary_image_predict = tf.argmax(slim.softmax(binary_image_predict), axis=-1)
             
         print('restore from {}'.format(config['mode_path']))

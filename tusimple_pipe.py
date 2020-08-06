@@ -6,7 +6,7 @@ if __name__ == '__main__':
     tusimple_path = sys.argv[1]
     out_path = sys.argv[2]
     if sys.argv[3] == 'test':
-        lanenet_data_provide.generate_test_data(tusimple_path, out_path)
+        lanenet_data_provide.generate_test_data(tusimple_path)
     else:
         rate = 0.7
         if len(sys.argv) == 5:

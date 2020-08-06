@@ -6,6 +6,8 @@ from log import log_configure
 import logging
 import math
 import random
+import shutil
+
 class lanenet_data_pipline(object):
     def __init__(self):
         log_configure.log_configure.init_log('lanenet_data_porcess', os.getcwd()+'/process_data_log')
@@ -135,7 +137,7 @@ class lanenet_data_pipline(object):
 
         return
     
-    def generate_test_data(self, data_path, output_path):
+    def generate_test_data(self, data_path):
         '''
          生成测试数据 txt
          :param data_path: tuSimple 数据集路径
@@ -175,9 +177,9 @@ class lanenet_data_pipline(object):
 
                     src_file_name.add(image_path)
 
-        with open(output_path + '/test_files.txt', 'w') as thandle:
+        with open(data_path + '/test_files.txt', 'w') as thandle:
             for file_name in src_file_name:
-                thandle.write(file_name + '\n')
+                thandle.write(file_name[file_name.find(data_path)+len(data_path)+1:] + '\n')
         return
     
 

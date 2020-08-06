@@ -4,19 +4,19 @@ import numpy as np
 import cv2
 
 class img_queue(object):
-    def __init__(self, src_path):
-        self._img_queue = self.__load_img(src_path)
+    def __init__(self, root_path, file_path):
+        self._img_queue = self.__load_img(root_path, file_path)
         self._start_index = 0
         return
 
-    def __load_img(self, src_path):
+    def __load_img(self, root_path, file_path):
         src_img_files = list()
-        with open(src_path, 'r') as handler:
+        with open(root_path + '/' + file_path, 'r') as handler:
             while True:
                 line = handler.readline()
                 if not line:
                     break
-                path = line.strip('\n')
+                path = root_path + '/' + line.strip('\n')
 
                 if not os.path.exists(path):
                     logging.info('{} is not exists'.format(path))
