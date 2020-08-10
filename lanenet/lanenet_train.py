@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from lanenet.evaluate import lanenet_evalute
 import numpy as np
 import cv2
+from lanenet.data_pipe import data_pipe
 
 """
 learning rate 0.001
@@ -27,56 +28,15 @@ class lanenet_train(object):
         self.delta_d = 3.0
         return
 
-    def _featch_img_paths(self, file_path, root_path):
-        binary_img_files = list()
-        instance_img_files = list()
-        src_img_files = list()
-        with open(file_path, 'r') as handler:
-            while True:
-                line = handler.readline()
-                if not line:
-                    break
-                path = line.strip('\n')
-                pathes = [root_path+'/'+ p for p in path.split(' ')]
-                for p in pathes:
-                    if not os.path.exists(p):
-                        logging.info('{} is not exists'.format(path))
-                        raise FileExistsError('{} is not exists'.format(path))
-
-                src_img_files.append(pathes[0])
-                binary_img_files.append(pathes[1])
-                instance_img_files.append(pathes[2])
-
-        return binary_img_files, instance_img_files, src_img_files
-
-    def _construct_img_queue(self, root_path, batch_size, width, height, sub_path='train_files.txt'):
-        file_path = root_path + '/' + sub_path
-        binary_img_files, instance_img_files, src_img_files = self._featch_img_paths(file_path, root_path)
-
-        binary_img_tensor = tf.convert_to_tensor(binary_img_files)
-        instance_img_tensor = tf.convert_to_tensor(instance_img_files)
-        src_img_tensor = tf.convert_to_tensor(src_img_files)
-
-        img_producer = tf.train.slice_input_producer([src_img_tensor, binary_img_tensor, instance_img_tensor])
-
-        src_img = tf.image.resize_image_with_crop_or_pad(tf.image.decode_jpeg(tf.read_file(img_producer[0]), channels=3), height, width)
-        binary_img = tf.image.resize_image_with_crop_or_pad(tf.image.decode_jpeg(tf.read_file(img_producer[1]), channels=1), height, width)
-        instance_img = tf.image.resize_image_with_crop_or_pad(tf.image.decode_jpeg(tf.read_file(img_producer[2]), channels=1), height, width)
-
-        binary_img = tf.divide(binary_img, tf.reduce_max(binary_img))
-        binary_img = tf.cast(binary_img, tf.uint8)
-
-        src_img = tf.cast(src_img, tf.float32)
-
-        return tf.train.batch([src_img, binary_img, instance_img], batch_size=batch_size, allow_smaller_final_batch=True), len(binary_img_files)
-
     def train(self, config):
         logging.info('ready for training, param={}'.format(config))
         print('ready for training, param={}'.format(config))
+
+        data_handle = data_pipe(width=config['img_width'], height=config['img_height'])
         lannet_net = lanenet_model()
         with tf.device(config['device']):
             #train
-            [src_queue, binary_queue, instance_queue], total_files = self._construct_img_queue(config['image_path'], config['batch_size'], config['img_width'], config['img_height'])
+            [src_queue, binary_queue, instance_queue] = data_handle.make_pipe(config['image_path'], config['batch_size'])
             binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'], skip=config['skip'])
             binary_acc = lanenet_evalute.accuracy(binary_queue, binary_logits)
             binary_fn = lanenet_evalute.fn(binary_queue, binary_logits)
@@ -107,8 +67,7 @@ class lanenet_train(object):
             train_summary_op = tf.summary.merge([total_loss_summary])
 
             #valid
-            [test_src_queue, test_binary_queue, test_instance_queue], total_files = self._construct_img_queue(config['image_path'], config['eval_batch_size'], config['img_width'], config['img_height'], 'test_files.txt')
-
+            [test_src_queue, test_binary_queue, test_instance_queue] = data_handle.make_pipe(config['image_path'], config['eval_batch_size'], 'test_files.txt')
             test_binary_logits, test_embedding_logits = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'], reuse=True, is_trainging=False)
 
             test_feature_dim = test_instance_queue.get_shape().as_list()
@@ -130,8 +89,6 @@ class lanenet_train(object):
             summary_writer = tf.summary.FileWriter(config['result_path']+'/summary')
             summary_writer.add_graph(sess.graph)
 
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(sess=sess, coord=coord)
             try:
                 min_loss = sys.float_info.max
                 for step in range(config['train_epoch']):
@@ -158,10 +115,6 @@ class lanenet_train(object):
             except Exception as err:
                 print('{}'.format(err))
                 logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
-            finally:
-                coord.request_stop()
-                coord.join(threads)
-            coord.join(threads)
 
         return
 
