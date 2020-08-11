@@ -52,8 +52,8 @@ class data_pipe():
         instance_img_tensor = tf.convert_to_tensor(instance_img_files)
         src_img_tensor = tf.convert_to_tensor(src_img_files)
 
-        data_set = tf.data.Dataset.from_tensor_slices((src_img_tensor, binary_img_tensor, instance_img_tensor))
+        data_set = tf.data.Dataset.from_tensor_slices((src_img_tensor, binary_img_tensor, instance_img_tensor)).repeat(count=None)
         data_set = data_set.map(self._pre_process_img, num_parallel_calls=self._num_parallel_calls)
-        data_set = data_set.batch(batch_size, drop_remainder=True)
-        iter = data_set.prefetch(batch_size).make_one_shot_iterator().get_next()
+        data_set = data_set.batch(batch_size, drop_remainder=True).prefetch(batch_size)
+        iter = data_set.make_one_shot_iterator().get_next()
         return iter[0], iter[1], iter[2]
