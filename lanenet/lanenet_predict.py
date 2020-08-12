@@ -10,6 +10,7 @@ import lanenet.img_queue
 import time
 import pandas as pd
 from sklearn.cluster import MeanShift
+from lanenet.test_data_pipe import test_data_pipe
 
 class lanenet_predict(object):
     def __init__(self):
@@ -21,15 +22,11 @@ class lanenet_predict(object):
         logging.info('ready for infer, param={}'.format(config))
         print('ready for infer, param={}'.format(config))
         lannet_net = lanenet_model()
-        img_queue = lanenet.img_queue.img_queue(config['image_path'], 'test_files.txt')
-        # img_batch = img_queue.next_batch(config['eval_batch_size'],config['img_width'], config['img_height'])
-        # cv2.imshow("resize", img_batch[0])
-        # cv2.waitKey()
+        data_handle = test_data_pipe(width=config['img_width'], height=config['img_height'])
+
         with tf.device(config['device']):
-
-            lanenet_image = tf.placeholder(tf.float32, shape=[None, config['img_height'], config['img_width'], 3])
-
-            binary_image_predict, pix_embedding_predict = lannet_net.build_net(lanenet_image, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'], is_trainging=True)
+            test_src_queue = data_handle.make_pipe(config['image_path'], config['eval_batch_size'], 'test_files.txt')
+            binary_image_predict, pix_embedding_predict = lannet_net.build_net(test_src_queue, config['eval_batch_size'], config['l2_weight_decay'], skip=config['skip'], is_trainging=False)
             binary_image_predict = tf.argmax(slim.softmax(binary_image_predict), axis=-1)
             
         print('restore from {}'.format(config['mode_path']))
@@ -38,17 +35,20 @@ class lanenet_predict(object):
         with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
             restore.restore(sess=sess, save_path=config['mode_path'])
 
-            while img_queue.is_continue(config['eval_batch_size']):
-                try:
+            try:
+                ilter = 0
+                while True:
                     start = time.time()
-                    lanenet_batch = img_queue.next_batch(config['eval_batch_size'], config['img_width'], config['img_height'])
-                    binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={lanenet_image: lanenet_batch})
+                    src_image, binary_image, pix_embedding = sess.run([test_src_queue, binary_image_predict, pix_embedding_predict])
                     cost = time.time()-start
                     print('predict {}/per, cost {}/s, mean cost {}/s'.format(config['eval_batch_size'], cost, cost/config['eval_batch_size']))
-                    self.post_processing(img_queue.batch(), config['result_path'], lanenet_batch, binary_image, pix_embedding)
-                except Exception as err:
-                    print('{}'.format(err))
-                    logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
+                    self.post_processing('iter-{}-b-{}'.format(ilter, config['eval_batch_size']), config['result_path'], src_image, binary_image, pix_embedding)
+                    ilter += 1
+            except tf.errors.OutOfRangeError as over:
+                print('predict success\n')
+            except Exception as err:
+                print('{}'.format(err))
+                logging.error('err:{}\n,track:{}'.format(err, traceback.format_exc()))
 
         return
 
@@ -110,12 +110,12 @@ class lanenet_predict(object):
             #         mask[c[0], c[1]] = (i+1) * color
 
             #cv2.imwrite(save_path + '-' + str(indice) + '-mask.png', mask)
-            cv2.imwrite(save_path + '-' + str(indice) + '-image.png', image)
-            cv2.imwrite(save_path + '-' + str(indice) + '-binary-predict.png', binary * 255)
+            cv2.imwrite(save_path + '-' + str(batch) + '-image.png', image)
+            cv2.imwrite(save_path + '-' + str(batch) + '-binary-predict.png', binary * 255)
             feature_dim = np.shape(embedding)[-1]
             for i in range(feature_dim):
                 embedding[:,:,i] = self.minmax_scale(embedding[:,:,i])
-            cv2.imwrite(save_path + '-' + str(indice) + '-embedding-predict.png', embedding)
+            cv2.imwrite(save_path + '-' + str(batch) + '-embedding-predict.png', embedding)
         return
 
     def get_lanenet(self, binary_img, pix_embedding):

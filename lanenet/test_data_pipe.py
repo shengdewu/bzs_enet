@@ -40,7 +40,7 @@ class test_data_pipe():
         src_img_files = self._featch_img_path(file_path, root_path)
         src_img_tensor = tf.convert_to_tensor(src_img_files)
 
-        data_set = tf.data.Dataset.from_tensor_slices(src_img_tensor).repeat(count=None)
+        data_set = tf.data.Dataset.from_tensor_slices(src_img_tensor)
         data_set = data_set.map(self._pre_process_img, num_parallel_calls=self._num_parallel_calls)
         data_set = data_set.batch(batch_size, drop_remainder=True).prefetch(batch_size)
         iter = data_set.make_one_shot_iterator().get_next()

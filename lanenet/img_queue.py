@@ -40,7 +40,7 @@ class img_queue(object):
         files = self._img_queue[start: self._start_index]
         imgs = list()
         for f in files:
-            img = cv2.imread(f)
+            img = cv2.imread(f, cv2.IMREAD_COLOR)
             img_resize = cv2.resize(img, (img_width, img_height))
             imgs.append(img_resize)
             del img
