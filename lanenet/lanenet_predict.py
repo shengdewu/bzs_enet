@@ -40,10 +40,10 @@ class lanenet_predict(object):
                 while True:
                     start = time.time()
                     src_image, binary_image, pix_embedding = sess.run([test_src_queue, binary_image_predict, pix_embedding_predict])
-                    cost = time.time()-start
-                    print('predict {}/per, cost {}/s, mean cost {}/s'.format(config['eval_batch_size'], cost, cost/config['eval_batch_size']))
+                    start1 = time.time()
+                    print('predict {}/per, cost {}/s, mean cost {}/s'.format(config['eval_batch_size'], start1-start, (start1-start)/config['eval_batch_size']))
                     self.post_processing('iter-{}-b-{}'.format(ilter, config['eval_batch_size']), config['result_path'], src_image, binary_image, pix_embedding)
-                    cost = time.time() - start
+                    cost = time.time() - start1
                     print('post process {}/per, cost {}/s, mean cost {}/s'.format(config['eval_batch_size'], cost, cost / config['eval_batch_size']))
                     ilter += 1
             except tf.errors.OutOfRangeError as over:
@@ -106,22 +106,26 @@ class lanenet_predict(object):
             binary = binary_imgs[batch]
             embedding = pix_embeddings[batch]
             image = src_imgs[batch]
-            cluster_coordinate = self.cluster(binary, embedding, max_center)
-            img_shape = image.shape
-            mask = np.zeros(shape=(img_shape[0], img_shape[1]))
-            for i, cc in enumerate(cluster_coordinate):
-                for c in cc:
-                    mask[c[0], c[1]] = (i+1) * color
-
-            start = time.time()
-            cv2.imwrite(save_path + '-' + str(indice) + '-mask.png', mask)
+            # cluster_coordinate = self.cluster(binary, embedding, max_center)
+            #img_shape = image.shape
+            # mask = np.zeros(shape=(img_shape[0], img_shape[1]))
+            # for i, cc in enumerate(cluster_coordinate):
+            #     for c in cc:
+            #         mask[c[0], c[1]] = (i+1) * color
+            #
+            # cv2.imwrite(save_path + '-' + str(indice) + '-mask.png', mask)
             cv2.imwrite(save_path + '-' + str(batch) + '-image.png', image)
             cv2.imwrite(save_path + '-' + str(batch) + '-binary-predict.png', binary * 255)
             feature_dim = np.shape(embedding)[-1]
             for i in range(feature_dim):
                 embedding[:,:,i] = self.minmax_scale(embedding[:,:,i])
             cv2.imwrite(save_path + '-' + str(batch) + '-embedding-predict.png', embedding)
-            print('save {}'.format(time.time() - start))
+
+            image_dim = self.convert_dim(image.astype(np.uint8), 3, 4)
+            binary_dim = self.convert_dim(cv2.cvtColor((binary*255).astype(np.uint8), cv2.COLOR_GRAY2BGR), 3, 4)
+            embedding_dim = embedding.astype(np.uint8)
+            cv2.imshow("detect", np.hstack([image_dim, binary_dim, embedding_dim]))
+            cv2.waitKey(1)
         return
 
     def get_lanenet(self, binary_img, pix_embedding):
@@ -132,6 +136,13 @@ class lanenet_predict(object):
             embedding.append(pix_embedding[idx[0][i], idx[1][i]])
             coordinate.append((idx[0][i], idx[1][i]))
         return np.array(embedding, np.float), np.array(coordinate, np.int)
+
+    def convert_dim(self, image, src_dim, update_dim):
+        shape = image.shape
+        max_dim_img = np.zeros((shape[0], shape[1], update_dim), np.uint8)
+        for dim in range(src_dim):
+            max_dim_img[:,:,dim] = image[:,:,dim]
+        return max_dim_img
 
 
 
