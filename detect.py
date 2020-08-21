@@ -8,7 +8,7 @@ import cv2
 if __name__ == '__main__':
     capture_pool = capture()
 
-    lannet_model = lanenet_realtime(capture_pool.test)
+    lannet_model = lanenet_realtime(capture_pool.capture)
     network_config = config.get_config(sys.argv[1])
     log_configure.init_log('detect', network_config['log_path'])
 
