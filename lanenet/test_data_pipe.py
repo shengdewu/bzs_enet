@@ -2,6 +2,7 @@ import tensorflow as tf
 import os
 import logging
 import multiprocessing
+import cv2
 
 class test_data_pipe():
     def __init__(self, width, height, num_parallel_calls=None):
@@ -45,5 +46,16 @@ class test_data_pipe():
         data_set = data_set.batch(batch_size, drop_remainder=True).prefetch(batch_size)
         iter = data_set.make_one_shot_iterator().get_next()
         return iter
+
+    def test_crop_or_pad(self, img_file, target_height, target_width):
+        src_img_tensor = tf.image.decode_jpeg(tf.read_file(img_file), channels=3)
+        crop_img_tensor = tf.image.resize_image_with_crop_or_pad(src_img_tensor, target_height, target_width)
+
+        with tf.Session() as sess:
+            src_img, crop_img = sess.run([src_img_tensor, crop_img_tensor])
+            cv2.imshow('source', src_img)
+            cv2.imshow('crop', crop_img)
+            cv2.waitKey(0)
+        return
 
 

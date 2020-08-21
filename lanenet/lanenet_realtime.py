@@ -42,7 +42,7 @@ class lanenet_realtime(object):
                 try:
                     pre_process = self.preprocess(config['img_width'], config['img_height'])
                     start = time.time()
-                    src_image, binary_image, pix_embedding = sess.run([binary_image_predict, pix_embedding_predict], feed_dict={test_src_queue: pre_process})
+                    src_image, binary_image, pix_embedding = sess.run([test_src_queue, binary_image_predict, pix_embedding_predict], feed_dict={test_src_queue: pre_process})
                     cost = time.time() - start
                     print('predict cost {}/s'.format(cost))
                     self.post_processing(start, config['result_path'], src_image, binary_image, pix_embedding)
@@ -57,12 +57,10 @@ class lanenet_realtime(object):
     def preprocess(self, width, height):
         frame = self.target()
         pre_process = timg.crop_pad(frame, height, width)
-        shape = pre_process.shape
-        np.reshape(pre_process, (1, shape[0], shape[1], shape[2]))
         cv2.imshow('source', frame)
         cv2.imshow('crop', pre_process)
-        cv2.waitKey(0)
-        return pre_process.astype(np.float32)
+        cv2.waitKey(1)
+        return [pre_process.astype(np.float32)]
 
     def minmax_scale(self, input_arr):
         min_val = np.min(input_arr)
@@ -92,6 +90,7 @@ class lanenet_realtime(object):
         binary_dim = self.convert_dim(cv2.cvtColor((binary * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR), 3, 4)
         embedding_dim = embedding.astype(np.uint8)
         cv2.imshow("detect", np.hstack([image_dim, binary_dim, embedding_dim]))
+        cv2.waitKey(1)
         return
 
     def convert_dim(self, image, src_dim, update_dim):
