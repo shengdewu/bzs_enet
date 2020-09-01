@@ -3,6 +3,9 @@ import os
 import logging
 import multiprocessing
 import cv2
+import numpy as np
+
+from timg.timg import timg
 
 class test_data_pipe():
     def __init__(self, width, height, num_parallel_calls=None):
@@ -48,14 +51,38 @@ class test_data_pipe():
         return iter
 
     def test_crop_or_pad(self, img_file, target_height, target_width):
-        src_img_tensor = tf.image.decode_jpeg(tf.read_file(img_file), channels=3)
+        '''
+        :param img_file:
+        :param target_height:
+        :param target_width:
+        :return:
+        不知道是哪个(tf.read_file/tf.image.decode_jpeg)和opencv(cv2.imread) 读出来的通道顺序不对 0通道和2通道反了
+        '''
+        raw = tf.read_file(img_file)
+        src_img_tensor = tf.image.decode_jpeg(raw, channels=3)
         crop_img_tensor = tf.image.resize_image_with_crop_or_pad(src_img_tensor, target_height, target_width)
 
         with tf.Session() as sess:
-            src_img, crop_img = sess.run([src_img_tensor, crop_img_tensor])
-            cv2.imshow('source', src_img)
-            cv2.imshow('crop', crop_img)
+            raw, src_img, crop_img = sess.run([raw, src_img_tensor, crop_img_tensor])
+
+            frame = cv2.imread(img_file, cv2.IMREAD_COLOR)
+            change_frame = np.zeros(np.shape(frame), dtype=frame.dtype)
+            axis_0 = frame[:, :, 0]
+            axis_1 = frame[:, :, 1]
+            axis_2 = frame[:, :, 2]
+            change_frame[:, :, 0] = axis_2
+            change_frame[:, :, 1] = axis_1
+            change_frame[:, :, 2] = axis_0
+
+            pre_process = timg.crop_pad(change_frame, target_height, target_width)
+            cv2.imshow('o-change', change_frame)
+            cv2.imshow('o-source', frame)
+            cv2.imshow('o-crop', pre_process)
+
+            cv2.imshow('t-source', src_img)
+            cv2.imshow('t-crop', crop_img)
             cv2.waitKey(0)
+            cv2.destroyAllWindows()
         return
 
 

@@ -56,8 +56,15 @@ class lanenet_realtime(object):
 
     def preprocess(self, width, height):
         frame = self.target()
-        pre_process = timg.crop_pad(frame, height, width)
-        cv2.imshow('source', frame)
+        change_frame = np.zeros(np.shape(frame), dtype=frame.dtype)
+        axis_0 = frame[:, :, 0]
+        axis_1 = frame[:, :, 1]
+        axis_2 = frame[:, :, 2]
+        change_frame[:, :, 0] = axis_2
+        change_frame[:, :, 1] = axis_1
+        change_frame[:, :, 2] = axis_0
+        pre_process = timg.crop_pad(change_frame, height, width)
+        cv2.imshow('source', change_frame)
         cv2.imshow('crop', pre_process)
         cv2.waitKey(1)
         return [pre_process.astype(np.float32)]
