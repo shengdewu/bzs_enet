@@ -56,7 +56,11 @@ class test_data_pipe():
         :param target_height:
         :param target_width:
         :return:
-        不知道是哪个(tf.read_file/tf.image.decode_jpeg)和opencv(cv2.imread) 读出来的通道顺序不对 0通道和2通道反了
+        1.
+        不知道是哪个(tf.read_file/tf.image.decode_jpeg  RGB image)和opencv(cv2.imread) 读出来的通道顺序不对 0通道和2通道反了
+        cv2.imread stored in **B G R** order
+        2.
+        Opencv读取与TensorFlow读图片不同，resize后的结果保留整数，而TensorFlow中image库resize的结果保留小数
         '''
         raw = tf.read_file(img_file)
         src_img_tensor = tf.image.decode_jpeg(raw, channels=3)

@@ -64,9 +64,9 @@ class lanenet_realtime(object):
         change_frame[:, :, 1] = axis_1
         change_frame[:, :, 2] = axis_0
         pre_process = timg.crop_pad(change_frame, height, width)
-        cv2.imshow('source', change_frame)
-        cv2.imshow('crop', pre_process)
-        cv2.waitKey(1)
+        # cv2.imshow('source', change_frame)
+        # cv2.imshow('crop', pre_process)
+        # cv2.waitKey(1)
         return [pre_process.astype(np.float32)]
 
     def minmax_scale(self, input_arr):
@@ -87,7 +87,7 @@ class lanenet_realtime(object):
         image = src_imgs[0]
 
         cv2.imwrite(save_path + 'image.png', image)
-        cv2.imwrite(save_path + 'binary-predict.png', binary)
+        cv2.imwrite(save_path + 'binary-predict.png', binary*255)
         feature_dim = np.shape(embedding)[-1]
         for i in range(feature_dim):
             embedding[:, :, i] = self.minmax_scale(embedding[:, :, i])
@@ -96,7 +96,7 @@ class lanenet_realtime(object):
         image_dim = self.convert_dim(image.astype(np.uint8), 3, 4)
         binary_dim = self.convert_dim(cv2.cvtColor((binary * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR), 3, 4)
         embedding_dim = embedding.astype(np.uint8)
-        cv2.imshow("detect", np.hstack([image_dim, binary_dim, embedding_dim]))
+        cv2.imshow("detect", np.hstack([image_dim, binary_dim*255, embedding_dim]))
         cv2.waitKey(1)
         return
 
