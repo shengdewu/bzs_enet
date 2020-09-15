@@ -21,12 +21,12 @@ class capture():
             return frame
         return None
 
-    # def test(self):
-    #     frame = cv2.imread('D:/work_space/tuSimpleDataSetSource/test/20/3-20.jpg', cv2.IMREAD_COLOR)
-    #     if self._display:
-    #         cv2.imshow('capture', frame)
-    #         cv2.waitKey(30)
-    #     return frame
+    def test(self):
+        frame = cv2.imread('D:/work_space/tuSimpleDataSetSource/test/20/3-20.jpg', cv2.IMREAD_COLOR)
+        if self._display:
+            cv2.imshow('capture', frame)
+            cv2.waitKey(30)
+        return frame
 
 
 
