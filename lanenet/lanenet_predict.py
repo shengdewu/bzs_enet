@@ -23,6 +23,7 @@ class lanenet_predict(object):
         print('ready for infer, param={}'.format(config))
         lannet_net = lanenet_model()
         data_handle = test_data_pipe(width=config['img_width'], height=config['img_height'])
+        # data_handle.test_crop_or_pad('D:/work_space/tuSimpleDataSetSource/test/20/3-20.jpg', config['img_height'], config['img_width'])
 
         with tf.device(config['device']):
             test_src_queue = data_handle.make_pipe(config['image_path'], config['eval_batch_size'], 'test_files.txt')
