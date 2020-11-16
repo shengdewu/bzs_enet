@@ -35,8 +35,10 @@ class factory():
                 oc['channel1'] = lp[0]
                 oc['channel2'] = lp[1]
                 oc['ksize'] = 3
-                oc['stride'] = 1
                 for i in range(lp[2]):
+                    oc['stride'] = 1
+                    if i == 0 and index > 2:
+                        oc['stride'] = 2
                     o = resnet_block.bottleneck_block_11(o, oc, name='reset{}-conv{}-'.format(layer,str(index)+'_'+str(i)))
                 index += 1
         elif block_type == 'bottleneck_block':
@@ -45,15 +47,24 @@ class factory():
                 oc = dict()
                 oc['channel'] = lp[0]
                 oc['ksize'] = 3
-                oc['stride'] = 1
+                oc['stride2'] = 1
                 for i in range(lp[1]):
-                    o = resnet_block.bottleneck_block_11(o, oc, name='reset{}-conv{}-'.format(layer, str(index) + '_' + str(i)))
+                    oc['stride1'] = 1
+                    if i == 0 and index > 2:
+                        oc['stride1'] = 2
+                    o = resnet_block.bottleneck_block(o, oc, name='reset{}-conv{}-'.format(layer, str(index) + '_' + str(i)))
                 index += 1
         else:
             raise RuntimeError('invalid block type')
 
-        o = tf.nn.avg_pool2d(o, 7, stride=1, padding='VALID', name='reset{}-avgpool'.format(layer))
+        o = tf.nn.avg_pool2d(o, 7, strides=1, padding='VALID', name='reset{}-avgpool'.format(layer))
 
         o = slim.conv2d(o, 1000, [1, 1], 1, padding='SAME', reuse=reuse, scope='reset{}-fc'.format(layer))
 
         return tf.nn.softmax(o, name='reset{}-softmax'.format(layer))
+
+if __name__ == '__main__':
+    resnet_factory = factory()
+    x = tf.get_variable(name='x',shape=(10, 224, 224, 3))
+    resnet18 = resnet_factory.create(x, '18')
+    print('resnet50')
