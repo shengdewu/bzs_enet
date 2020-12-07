@@ -155,7 +155,7 @@ class ultranet_data_pipline:
 
                     cv2.imwrite(out_img_path + '/' + label_name, label_image)
                     copyfile(image_path, out_img_path + '/' + image_name)
-                    train_handle.write(image_name + ' ' + label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
+                    train_handle.write('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
 
         train_handle.close()
         return
