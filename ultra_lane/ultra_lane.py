@@ -35,10 +35,11 @@ class ultra_lane():
         return group_cls
 
     def train(self, config):
-        data_handle = data_stream(config['height'], config['width'], self._row_anchors, self._lanes, self._cells, config['root'])
+        data_handle = data_stream(config['img_height'], config['img_width'], self._row_anchors, self._lanes, self._cells, config['image_path'])
         pipe_handle = util.data_pipe.data_pipe()
 
-        src_img, cls_label = pipe_handle.make_pipe(config['batch_size'], data_handle.create_img_tensor, data_handle.pre_process_img)
+        src_tensor, cls_tensor = data_handle.create_img_tensor()
+        src_img, cls_label = pipe_handle.make_pipe(config['batch_size'], (src_tensor, cls_tensor), data_handle.pre_process_img)
 
         return
 
