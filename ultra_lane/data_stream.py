@@ -35,4 +35,8 @@ class data_stream:
     def pre_process_img(self, src_img_tensor, label_img_tensor):
         src_img = tf.image.decode_jpeg(tf.read_file(src_img_tensor), channels=3)
         label_img = tf.image.decode_jpeg(tf.read_file(label_img_tensor), channels=1)
+
+        label_img = tf.cast(label_img, tf.uint8)
+        src_img = tf.cast(src_img, tf.float32)
+
         return src_img, label_img

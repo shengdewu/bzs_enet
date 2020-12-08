@@ -14,24 +14,28 @@ class ultra_lane():
         self._lanes = tusimple_process.ultranet_comm.LANES
         return
 
-    def make_net(self, x, label, cell, anchors, lanes, trainable=True, reuse=False):
+    def make_net(self, x, label, width, height, trainable=True, reuse=False):
+        b, w, h, c = x.get_shape().as_list()
+        x.set_shape(shape=[b, width, height, c])
+        label.set_shape(shape=(b, len(self._row_anchors), self._lanes, 1))
+
         resnet_model = resnet()
-        resnet_model.resnet18(x, cell+1, trainable, reuse)
+        resnet_model.resnet18(x, self._cells+1, trainable, reuse)
         x3 = resnet_model.layer3
         x4 = resnet_model.layer4
         x5 = resnet_model.layer5
 
-        total_dims = (cell+1)*anchors*lanes
+        total_dims = (self._cells + 1) * len(self._row_anchors) * self._lanes
         fc = slim.conv2d(x5, 8, [1, 1], 1, padding='SAME', reuse=reuse, scope='fc-1')
         fc = tf.reshape(fc, shape=(-1, 1800))
         fc = tf.contrib.layers.fully_connected(fc, 2048, scope='line1')
         fc = tf.contrib.layers.fully_connected(fc, total_dims, scope='line2')
-        group_cls = tf.reshape(fc, shape=(-1, cell+1, anchors, lanes))
+        group_cls = tf.reshape(fc, shape=(-1, len(self._row_anchors), self._lanes, self._cells+1))
 
-        label_oh = tf.one_hot(label, cell+1)
+        label = tf.reshape(label, (b, len(self._row_anchors), self._lanes))
+        label_oh = tf.one_hot(label, self._cells+1)
         cls = tf.losses.softmax_cross_entropy(label_oh, group_cls)
-
-        return group_cls
+        return cls
 
     def train(self, config):
         data_handle = data_stream(config['image_path'])
@@ -39,6 +43,7 @@ class ultra_lane():
         with tf.device(config['device']):
             src_tensor, cls_tensor = data_handle.create_img_tensor()
             src_img_queue, cls_label_queue = pipe_handle.make_pipe(config['batch_size'], (src_tensor, cls_tensor), data_handle.pre_process_img)
+            self.make_net(src_img_queue, cls_label_queue, config['img_width'], config['img_height'])
 
             with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
                 sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
