@@ -4,9 +4,13 @@ from shutil import copyfile
 import numpy as np
 import cv2
 import tqdm
+from tusimple_process.create_label import tusimple_label
 
 class ultranet_data_pipline:
-    def __init__(self):
+    def __init__(self, label=False):
+        self.label_handle = None
+        if label: #是否同时构建标签
+            self.label_handle = tusimple_label()
         return
 
     def _create_path(self, path):
@@ -143,7 +147,7 @@ class ultranet_data_pipline:
 
                         lane = np.array(lanes[index])
                         if np.all(lane == -2):
-                            print('current lane {}/{} is valid'.format(jfile, image_path))
+                            print('current lane {}/{} is invalid'.format(jfile, image_path))
                             continue
                         valid = lane != -2
                         line_tmp = [None] * (h_sample[valid].shape[0] + lane[valid].shape[0])
@@ -152,14 +156,21 @@ class ultranet_data_pipline:
                         lines.append(line_tmp)
 
                     label_image, bin_label = self.draw(lines, shape, 90, show)
-
-                    cv2.imwrite(out_img_path + '/' + label_name, label_image)
-                    copyfile(image_path, out_img_path + '/' + image_name)
-                    train_handle.write('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
+                    if self.label_handle is None:
+                        label_out_path = out_img_path + '/' + label_name
+                        cv2.imwrite(label_out_path, label_image)
+                        image_out_path = out_img_path + '/' + image_name
+                        copyfile(image_path, image_out_path)
+                        train_handle.write('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
+                    else:
+                        src_img, cls_label = self.label_handle.create_label(label_image, cv2.imread(image_path))
+                        cv2.imwrite(out_img_path + '/' + label_name, cls_label)
+                        cv2.imwrite(out_img_path + '/' + image_name, src_img)
+                        train_handle.write('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
 
         train_handle.close()
         return
 
 if __name__ == '__main__':
-    lanenet_data_provide = ultranet_data_pipline()
+    lanenet_data_provide = ultranet_data_pipline(True)
     lanenet_data_provide.generate_data('D:/work_space/tuSimpleDataSetSource/train/', 'D:/work_space/tuSimpleDataSet/train_utlra/train/')
