@@ -3,16 +3,15 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import util.data_pipe
 from ultra_lane.data_stream import data_stream
-'''
-the row anchors of tusimple dataset, in which the image height is 720, range from 160 to 710 with step of 10
-the number of gridding cells is set to 100 on tusimple dataset     
-'''
+import tusimple_process.ultranet_comm
+import cv2
+
 class ultra_lane():
     def __init__(self):
         #height = 720
-        self._row_anchors = [160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600, 610, 620, 630, 640, 650, 660, 670, 680, 690, 700, 710]
-        self._cells = 100
-        self._lanes = 4
+        self._row_anchors = tusimple_process.ultranet_comm.ROW_ANCHORS
+        self._cells = tusimple_process.ultranet_comm.CELLS
+        self._lanes = tusimple_process.ultranet_comm.LANES
         return
 
     def make_net(self, x, label, cell, anchors, lanes, trainable=True, reuse=False):
@@ -35,11 +34,19 @@ class ultra_lane():
         return group_cls
 
     def train(self, config):
-        data_handle = data_stream(config['img_height'], config['img_width'], self._row_anchors, self._lanes, self._cells, config['image_path'])
+        data_handle = data_stream(config['image_path'])
         pipe_handle = util.data_pipe.data_pipe()
+        with tf.device(config['device']):
+            src_tensor, cls_tensor = data_handle.create_img_tensor()
+            src_img_queue, cls_label_queue = pipe_handle.make_pipe(config['batch_size'], (src_tensor, cls_tensor), data_handle.pre_process_img)
 
-        src_tensor, cls_tensor = data_handle.create_img_tensor()
-        src_img, cls_label = pipe_handle.make_pipe(config['batch_size'], (src_tensor, cls_tensor), data_handle.pre_process_img)
-
+            with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
+                sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
+                src_img, cls_label = sess.run([src_img_queue, cls_label_queue])
+                cv2.imshow('src_img', src_img[0])
+                cv2.imshow('cls', cls_label[0])
+                cv2.waitKey()
+                cv2.destroyAllWindows()
+                print('')
         return
 
