@@ -112,9 +112,9 @@ class lanenet_data_pipline(object):
                     # cv2.imshow('src', image)
                     # cv2.imshow('instance', instance_img)
                     # cv2.waitKey(10)
-                    binary_file_name.add(binary_save_path)
-                    instance_file_name.add(instance_save_path)
-                    src_file_name.add(img_save_path)
+                    binary_file_name.add('gt_binary_img/' + file_name)
+                    instance_file_name.add('gt_instance_img/' + file_name)
+                    src_file_name.add('gt_src_img/' + file_name)
 
                     total_files.append((img_save_path, binary_save_path, instance_save_path))
 
@@ -185,4 +185,4 @@ class lanenet_data_pipline(object):
 
 if __name__ == '__main__':
     lanenet_data_provide = lanenet_data_pipline()
-    lanenet_data_provide.generate_data('D:/work_space/tuSimpleDataSet/train/', 'D:/work_space/tuSimpleDataSet/lanenet_data/')
+    lanenet_data_provide.generate_data('D:/work_space/tuSimpleDataSetSource/train/', 'D:/work_space/tuSimpleDataSet/lanenet_data/')
