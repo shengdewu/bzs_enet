@@ -15,9 +15,9 @@ class ultra_lane():
         return
 
     def make_net(self, x, label, width, height, trainable=True, reuse=False):
-        b, w, h, c = x.get_shape().as_list()
-        x.set_shape(shape=[b, width, height, c])
-        label.set_shape(shape=(b, len(self._row_anchors), self._lanes, 1))
+        b, w, h, c = label.get_shape().as_list()
+        #x.set_shape(shape=[b, width, height, c])
+        #label.set_shape(shape=(b, len(self._row_anchors), self._lanes, 1))
 
         resnet_model = resnet()
         resnet_model.resnet18(x, self._cells+1, trainable, reuse)
@@ -32,13 +32,13 @@ class ultra_lane():
         fc = tf.contrib.layers.fully_connected(fc, total_dims, scope='line2')
         group_cls = tf.reshape(fc, shape=(-1, len(self._row_anchors), self._lanes, self._cells+1))
 
-        label = tf.reshape(label, (b, len(self._row_anchors), self._lanes))
+        label = tf.reshape(label, (b, w, h))
         label_oh = tf.one_hot(label, self._cells+1)
         cls = tf.losses.softmax_cross_entropy(label_oh, group_cls)
         return cls
 
     def train(self, config):
-        data_handle = data_stream(config['image_path'])
+        data_handle = data_stream(config['image_path'], config['img_width'], config['img_height'])
         pipe_handle = util.data_pipe.data_pipe()
         with tf.device(config['device']):
             src_tensor, cls_tensor = data_handle.create_img_tensor()
