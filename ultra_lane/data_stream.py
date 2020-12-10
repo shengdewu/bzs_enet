@@ -5,13 +5,13 @@ import tensorflow as tf
 import numpy as np
 
 class data_stream:
-    def __init__(self, root, img_w, img_h, label_w=4, label_h=56, file_name='train_gt.txt'):
+    def __init__(self, root, img_w, img_h, file_name='train_files.txt'):
         self._root = root
         self._file_name = file_name
         self._img_w = img_w
         self._img_h = img_h
-        self._label_w = label_w
-        self._label_h = label_h
+        self._label_w = 4
+        self._label_h = 56
         return
 
     def create_img_tensor(self):

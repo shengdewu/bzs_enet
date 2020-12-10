@@ -5,6 +5,8 @@ import numpy as np
 import cv2
 import tqdm
 from tusimple_process.create_label import tusimple_label
+import random
+import math
 
 class ultranet_data_pipline:
     def __init__(self, label=False):
@@ -95,7 +97,7 @@ class ultranet_data_pipline:
         #     cv2.destroyAllWindows()
         return label_image, bin_label
 
-    def generate_data(self, data_path, out_path, show=False, shape=(720, 1280)):
+    def generate_data(self, data_path, out_path, show=False, shape=(720, 1280), rate=0.7):
         '''
         :param data_path: tuSimple 数据集路径
         :param out_path: 产生结果输出路径
@@ -118,7 +120,7 @@ class ultranet_data_pipline:
         if len(json_files) < 0:
             raise FileExistsError('{} not exists json files'.format(data_path))
 
-        train_handle = open(out_path + '/' + 'train_gt.txt', 'w')
+        total_files = list()
 
         for jfile in tqdm.tqdm(json_files):
             with open(data_path + '/' + jfile, 'r') as handle:
@@ -161,14 +163,23 @@ class ultranet_data_pipline:
                         cv2.imwrite(label_out_path, label_image)
                         image_out_path = out_img_path + '/' + image_name
                         copyfile(image_path, image_out_path)
-                        train_handle.write('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
+                        total_files.append('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
                     else:
                         src_img, cls_label = self.label_handle.create_label(label_image, cv2.imread(image_path))
                         cv2.imwrite(out_img_path + '/' + label_name, cls_label)
                         cv2.imwrite(out_img_path + '/' + image_name, src_img)
-                        train_handle.write('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
+                        total_files.append('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
 
-        train_handle.close()
+        random.shuffle(total_files)
+        train_len = math.ceil(len(total_files) * rate)
+        with open(out_path+'/train_files.txt', 'w') as train_handle:
+            for index in range(train_len):
+                train_handle.write(total_files[index])
+
+        with open(out_path+'/valid_files.txt', 'w') as test_handle:
+            for index in range(train_len+1, len(total_files)):
+                test_handle.write(total_files[index])
+
         return
 
 if __name__ == '__main__':
