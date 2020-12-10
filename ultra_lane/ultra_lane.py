@@ -7,6 +7,7 @@ import tusimple_process.ultranet_comm
 import cv2
 from ultra_lane.similarity_loss import similaryit_loss
 from ultra_lane.similarity_loss import structural_loss
+import logging
 
 class ultra_lane():
     def __init__(self):
@@ -52,6 +53,14 @@ class ultra_lane():
             cls_loss_tensor, sim_loss_tensor, shp_loss_tensor = self.make_net(src_img_queue, cls_label_queue)
             total_loss_tensor = cls_loss_tensor + sim_loss_tensor + shp_loss_tensor
 
+            global_step = tf.train.create_global_step()
+            learning_rate = tf.train.exponential_decay(config['learning_rate'], global_step, config['num_epochs_before_decay'], config['decay_rate'])
+            optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=config['epsilon'])
+            train_op = slim.learning.create_train_op(total_loss_tensor, optimizer)
+
+            total_loss_summary = tf.summary.scalar(name='total-loss', tensor=total_loss_tensor)
+            train_summary_op = tf.summary.merge([total_loss_summary])
+
             #valid
             valid_data_handle = data_stream(config['image_path'], config['img_width'], config['img_height'], 'valid_files.txt')
             valid_src_tensor, valid_cls_tensor = valid_data_handle.create_img_tensor()
@@ -59,11 +68,31 @@ class ultra_lane():
             valid_cls_loss_tensor, valid_sim_loss_tensor, valid_shp_loss_tensor = self.make_net(valid_src_img_queue, valid_cls_label_queue, False, True)
             valid_total_loss_tensor = valid_cls_loss_tensor + valid_sim_loss_tensor + valid_shp_loss_tensor
 
+            saver = tf.train.Saver()
             with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
                 sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
-                total_loss = sess.run(total_loss_tensor)
-                val_total_loss = sess.run(valid_total_loss_tensor)
-                print(total_loss)
-                print(val_total_loss)
+                summary_writer = tf.summary.FileWriter(config['result_path'] + '/summary')
+                summary_writer.add_graph(sess.graph)
+
+                min_loss = float('inf')
+                for step in range(config['train_epoch']):
+
+                    _, cls_loss, sim_loss, shp_loss, train_summary, gs, lr = sess.run([train_op, cls_loss_tensor, sim_loss_tensor, shp_loss_tensor, train_summary_op, global_step, learning_rate])
+
+                    total_loss = cls_loss + sim_loss + shp_loss
+
+                    summary_writer.add_summary(train_summary, global_step=gs)
+
+                    print('train model: gs={},  loss={}, lr={}'.format(gs, total_loss, lr))
+
+                    if (step + 1) % config['update_mode_freq'] == 0:
+                        val_total_loss = sess.run(valid_total_loss_tensor)
+                        logging.info('valid model: gs={},  loss={}, lr={}'.format(gs, val_total_loss, lr))
+                        print('valid model: gs={},  loss={}, lr={}'.format(gs, val_total_loss, lr))
+                        if min_loss > total_loss:
+                            saver.save(sess, config['mode_path'])
+                            logging.info('update model loss from {} to {}'.format(min_loss, total_loss))
+
+                    min_loss = min(min_loss, total_loss)
         return
 
