@@ -48,9 +48,9 @@ class ultra_lane():
         with tf.device(config['device']):
             #train
             train_data_handle = data_stream(config['image_path'], config['img_width'], config['img_height'])
-            src_tensor, cls_tensor = train_data_handle.create_img_tensor()
-            src_img_queue, cls_label_queue = pipe_handle.make_pipe(config['batch_size'], (src_tensor, cls_tensor), train_data_handle.pre_process_img)
-            cls_loss_tensor, sim_loss_tensor, shp_loss_tensor = self.make_net(src_img_queue, cls_label_queue)
+            src_tensor, label_tensor, cls_tensor = train_data_handle.create_img_tensor()
+            src_img_queue, label_queue, cls_queue = pipe_handle.make_pipe(config['batch_size'], (src_tensor, label_tensor, cls_tensor), train_data_handle.pre_process_img)
+            cls_loss_tensor, sim_loss_tensor, shp_loss_tensor = self.make_net(src_img_queue, cls_queue)
             total_loss_tensor = cls_loss_tensor + sim_loss_tensor + shp_loss_tensor
 
             global_step = tf.train.create_global_step()
@@ -63,9 +63,9 @@ class ultra_lane():
 
             #valid
             valid_data_handle = data_stream(config['image_path'], config['img_width'], config['img_height'], 'valid_files.txt')
-            valid_src_tensor, valid_cls_tensor = valid_data_handle.create_img_tensor()
-            valid_src_img_queue, valid_cls_label_queue = pipe_handle.make_pipe(config['batch_size'], (valid_src_tensor, valid_cls_tensor), valid_data_handle.pre_process_img)
-            valid_cls_loss_tensor, valid_sim_loss_tensor, valid_shp_loss_tensor = self.make_net(valid_src_img_queue, valid_cls_label_queue, False, True)
+            valid_src_tensor, valid_label_tensor, valid_cls_tensor = valid_data_handle.create_img_tensor()
+            valid_src_img_queue, valid_label_queue, valid_cls_queue = pipe_handle.make_pipe(config['batch_size'], (valid_src_tensor, valid_label_tensor, valid_cls_tensor), valid_data_handle.pre_process_img)
+            valid_cls_loss_tensor, valid_sim_loss_tensor, valid_shp_loss_tensor = self.make_net(valid_src_img_queue, valid_cls_queue, False, True)
             valid_total_loss_tensor = valid_cls_loss_tensor + valid_sim_loss_tensor + valid_shp_loss_tensor
 
             saver = tf.train.Saver()

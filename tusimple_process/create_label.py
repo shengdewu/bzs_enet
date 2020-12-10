@@ -81,12 +81,10 @@ class tusimple_label:
         np.resize(label, new_shape=(36, 100)).astype(np.int32)
         return
 
-    def create_label(self, label_img, src_img):
+    def create_label(self, label_img, w):
         # 待定，是否先进行仿射变化
         lane_pts = self.get_index(label_img)
-        h, w, c = src_img.shape
         cls_label = self.grid_pts(lane_pts, self._cells, w)
-        src_img = cv2.resize(src_img, dsize=(800, 288))
         # src_img = np.subtract(src_img, (0.485, 0.456, 0.406))
         # src_img = np.divide(src_img, (0.229, 0.224, 0.225))
-        return src_img, cls_label
+        return cls_label

@@ -9,10 +9,10 @@ import random
 import math
 
 class ultranet_data_pipline:
-    def __init__(self, label=False):
-        self.label_handle = None
-        if label: #是否同时构建标签
-            self.label_handle = tusimple_label()
+    def __init__(self, cls_label=False):
+        self.cls_label_handle = None
+        if cls_label: #是否同时构建标签
+            self.cls_label_handle = tusimple_label()
         return
 
     def _create_path(self, path):
@@ -158,17 +158,24 @@ class ultranet_data_pipline:
                         lines.append(line_tmp)
 
                     label_image, bin_label = self.draw(lines, shape, 90, show)
-                    if self.label_handle is None:
+                    if self.cls_label_handle is None:
                         label_out_path = out_img_path + '/' + label_name
                         cv2.imwrite(label_out_path, label_image)
                         image_out_path = out_img_path + '/' + image_name
                         copyfile(image_path, image_out_path)
                         total_files.append('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
                     else:
-                        src_img, cls_label = self.label_handle.create_label(label_image, cv2.imread(image_path))
-                        cv2.imwrite(out_img_path + '/' + label_name, cls_label)
+                        src_img = cv2.imread(image_path)
+                        h, w, c = src_img.shape
+                        cls_label = self.cls_label_handle.create_label(label_image, w)
+                        src_img = cv2.resize(src_img, dsize=(800, 288), interpolation=cv2.INTER_LINEAR)
+                        label_image = cv2.resize(label_image, dsize=(800, 288), interpolation=cv2.INTER_NEAREST)
+
+                        cls_name = label_name[0:label_name.rfind('.')] + '-cls.png'
+                        cv2.imwrite(out_img_path + '/' + label_name, label_image)
+                        cv2.imwrite(out_img_path + '/' + cls_name, cls_label)
                         cv2.imwrite(out_img_path + '/' + image_name, src_img)
-                        total_files.append('img'+'/'+image_name + ' ' + 'img'+'/'+label_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
+                        total_files.append('img/'+image_name + ' ' + 'img/'+label_name + ' ' + 'img/' + cls_name + ' ' + ''.join(list(map(str, bin_label))) + '\n')
 
         random.shuffle(total_files)
         train_len = math.ceil(len(total_files) * rate)
