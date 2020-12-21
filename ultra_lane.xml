@@ -3,7 +3,7 @@
 	<train>
 	    <batch_size>8</batch_size>
 		<eval_batch_size>1</eval_batch_size>
-		<train_epoch>100000</train_epoch>
+		<train_epoch>200</train_epoch>
 		<stage_two_three>1</stage_two_three>
 		<skip>False</skip>
 <!--		<sim_loss>1</sim_loss>-->
@@ -12,16 +12,16 @@
 		<device_log>False</device_log>
 	</train>
     <optimize>
-		<learning_rate>0.0005</learning_rate>
+		<learning_rate>0.0004</learning_rate>
         <end_learning_rate>0.000001</end_learning_rate>
 		<decay_rate>0.2</decay_rate>
 		<epsilon>0.000000002</epsilon>
-		<num_epochs_before_decay>88000</num_epochs_before_decay>
+		<num_epochs_before_decay>150</num_epochs_before_decay>
 		<l2_weight_decay>0.001</l2_weight_decay>
     </optimize>
     <mode>
         <mode_path>D:/work_space/bzs/bzs_enet/dataset_result/lanenet_model_path/checkout</mode_path>
-        <update_mode_freq>5000</update_mode_freq>
+        <update_mode_freq>2</update_mode_freq>
     </mode>
 	<image>
         <image_path>D:/work_space/tuSimpleDataSet/train_utlra/train</image_path>
