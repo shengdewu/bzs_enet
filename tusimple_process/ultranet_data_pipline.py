@@ -168,8 +168,10 @@ class ultranet_data_pipline:
                         src_img = cv2.imread(image_path)
                         h, w, c = src_img.shape
                         cls_label = self.cls_label_handle.create_label(label_image, w)
+                        self.cls_label_handle.rescontruct(cls_label, src_img, True)
                         src_img = cv2.resize(src_img, dsize=(800, 288), interpolation=cv2.INTER_LINEAR)
                         label_image = cv2.resize(label_image, dsize=(800, 288), interpolation=cv2.INTER_NEAREST)
+                        self.cls_label_handle.rescontruct(cls_label, src_img, True)
 
                         cls_name = label_name[0:label_name.rfind('.')] + '-cls.png'
                         cv2.imwrite(out_img_path + '/' + label_name, label_image)

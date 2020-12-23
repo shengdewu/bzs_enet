@@ -88,3 +88,26 @@ class tusimple_label:
         # src_img = np.subtract(src_img, (0.485, 0.456, 0.406))
         # src_img = np.divide(src_img, (0.229, 0.224, 0.225))
         return cls_label
+
+    def rescontruct(self, cls_label, img, show=False):
+        h, w, c = img.shape
+        row_anchors = self._row_anchors
+        if h != 720:
+            row_anchors = [int(i*h/720) for i in self._row_anchors]
+
+        col_sample = np.linspace(0, w - 1, self._cells)
+
+        _, lanes = cls_label.shape
+        for i in range(lanes):
+            pti = cls_label[:, i]
+            to_pts = [int(pt * (col_sample[1] - col_sample[0])) if pt != self._cells else -1 for pt in pti]
+            points = [(w, h) for h, w in zip(row_anchors, to_pts)]
+            for l in points:
+                if l[0] == -1:
+                    continue
+                cv2.circle(img, l, radius=3, color=(0,0,255), thickness=3)
+        if show:
+            cv2.imshow('img', img)
+            cv2.waitKey()
+            cv2.destroyAllWindows()
+        return img

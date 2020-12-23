@@ -45,9 +45,12 @@ class data_stream:
         label_img = tf.image.decode_jpeg(tf.read_file(label_img_tensor), channels=1)
         cls_img = tf.image.decode_jpeg(tf.read_file(cls_img_tensor), channels=1)
 
-        src_img = tf.image.resize_image_with_crop_or_pad(src_img, self._img_h, self._img_w)
-        label_img = tf.image.resize_image_with_crop_or_pad(label_img, self._img_h, self._img_w)
-        cls_img = tf.image.resize_image_with_crop_or_pad(cls_img, self._label_h, self._label_w)
+        src_img.set_shape([self._img_h, self._img_w, 3])
+        label_img.set_shape([self._img_h, self._img_w, 1])
+        cls_img.set_shape([self._label_h, self._label_w, 1])
+        # src_img = tf.image.resize_image_with_crop_or_pad(src_img, self._img_h, self._img_w)
+        # label_img = tf.image.resize_image_with_crop_or_pad(label_img, self._img_h, self._img_w)
+        # cls_img = tf.image.resize_image_with_crop_or_pad(cls_img, self._label_h, self._label_w)
 
         label_img = tf.cast(label_img, tf.uint8)
         src_img = tf.cast(src_img, tf.float32)
