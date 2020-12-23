@@ -90,7 +90,7 @@ class ultra_lane():
 
                     summary_writer.add_summary(train_summary, global_step=gs)
 
-                    print('train model: gs={},  loss={},[{},{},{}], lr={}'.format(gs, total_loss, cls_loss, sim_loss, shp_loss, lr))
+                    logging.info('train model: gs={},  loss={},[{},{},{}], lr={}'.format(gs, total_loss, cls_loss, sim_loss, shp_loss, lr))
 
                     if (step + 1) % config['update_mode_freq'] == 0:
                         val_total_loss, val_lane_img, val_label_row_anchor, val_row_anchor = sess.run([valid_total_loss_tensor, valid_src_img_queue, valid_cls_queue, valid_lane_row_anchors_tensor])
