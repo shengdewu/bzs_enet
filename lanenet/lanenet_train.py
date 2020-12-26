@@ -15,10 +15,17 @@ import cv2
 from lanenet.data_pipe import data_pipe
 
 """
-learning rate 0.001
-decay rate 0.1
-epsilon 0.99
-l2 weigth decay 0.001
+learning rate 0.0005
+end_learning_rate 0.000001
+num_epochs_before_decay 88000
+decay_rate 0.2
+epsilon 0.000000002
+l2_weight_decay 0.001
+
+batch_size 8
+eval_batch_size 10
+train_epoch 100000
+skip False
 img width 512
 img height 256
 """
