@@ -61,6 +61,10 @@ class ultra_lane():
             total_loss_tensor = cls_loss_tensor + sim_loss_tensor + shp_loss_tensor
             total_loss_summary = tf.summary.scalar(name='total-loss', tensor=total_loss_tensor)
             cls_loss_summary = tf.summary.scalar(name='cls-loss', tensor=cls_loss_tensor)
+            b, w, h, c = cls_queue.get_shape().as_list()
+            v = tf.cast(tf.equal(lane_row_anchors_tensor, tf.cast(tf.reshape(cls_queue, shape=(b, w, h)), lane_row_anchors_tensor.dtype)), tf.float32)
+            precives = tf.reduce_sum(v) / float(b * w * h)
+            precives_summary = tf.summary.scalar(name='precives', tensor=precives)
 
             global_step = tf.train.create_global_step()
             learning_rate = tf.train.exponential_decay(config['learning_rate'], global_step, config['num_epochs_before_decay'], config['decay_rate'])
@@ -77,7 +81,7 @@ class ultra_lane():
             val_total_loss_summary = tf.summary.scalar(name='val-total-loss', tensor=valid_total_loss_tensor)
             val_cls_loss_summary = tf.summary.scalar(name='val-cls-loss', tensor=valid_cls_loss_tensor)
 
-            train_summary_op = tf.summary.merge([total_loss_summary, cls_loss_summary, ls_summary, val_total_loss_summary, val_cls_loss_summary])
+            train_summary_op = tf.summary.merge([total_loss_summary, cls_loss_summary, ls_summary, val_total_loss_summary, val_cls_loss_summary, precives_summary])
 
             saver = tf.train.Saver()
             with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
@@ -88,19 +92,20 @@ class ultra_lane():
                 min_loss = float('inf')
                 for step in range(config['train_epoch']):
 
-                    _, cls_loss, sim_loss, shp_loss, train_summary, gs, lr, lane_img, label_row_anchor, train_row_anchor = sess.run([train_op, cls_loss_tensor, sim_loss_tensor, shp_loss_tensor, train_summary_op, global_step, learning_rate, src_img_queue, cls_queue, lane_row_anchors_tensor])
+                    _, cls_loss, sim_loss, shp_loss, train_summary, gs, lr, lane_img, label_row_anchor, train_row_anchor, p = sess.run([train_op, cls_loss_tensor, sim_loss_tensor, shp_loss_tensor, train_summary_op, global_step, learning_rate, src_img_queue, cls_queue, lane_row_anchors_tensor, precives])
 
                     total_loss = cls_loss + sim_loss + shp_loss
 
                     summary_writer.add_summary(train_summary, global_step=gs)
 
-                    logging.info('train model: gs={},  loss={},[{},{},{}], lr={}'.format(gs, total_loss, cls_loss, sim_loss, shp_loss, lr))
+                    logging.info('train model: gs={},  loss={},[{},{},{}] p={}, lr={}'.format(gs, total_loss, cls_loss, sim_loss, shp_loss, p, lr))
 
                     if (step + 1) % config['update_mode_freq'] == 0:
                         val_total_loss, val_lane_img, val_label_row_anchor, val_row_anchor = sess.run([valid_total_loss_tensor, valid_src_img_queue, valid_cls_queue, valid_lane_row_anchors_tensor])
                         self.match_coordinate(val_lane_img.astype(np.uint8), val_label_row_anchor, val_row_anchor, save_path, step)
                         logging.info('valid model: gs={},  loss={}, lr={}'.format(gs, val_total_loss, lr))
                         print('valid model: gs={},  loss={}, lr={}'.format(gs, val_total_loss, lr))
+                        print('train model: gs={},  loss={},[{},{},{}] p={}, lr={}'.format(gs, total_loss, cls_loss, sim_loss, shp_loss, p, lr))
                         if min_loss > total_loss:
                             saver.save(sess, config['mode_path'])
                             logging.info('update model loss from {} to {}'.format(min_loss, total_loss))
