@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-class lanenet_evalute(object):
+class evalute(object):
     def __init__(self):
         return
 

@@ -90,6 +90,7 @@ class tusimple_label:
         return cls_label
 
     def rescontruct(self, cls_label, img, show=False):
+        color = [(255, 0, 0), (0,255,0), (0, 0, 255), (255, 255, 0)]
         h, w, c = img.shape
         row_anchors = self._row_anchors
         if h != 720:
@@ -102,10 +103,11 @@ class tusimple_label:
             pti = cls_label[:, i]
             to_pts = [int(pt * (col_sample[1] - col_sample[0])) if pt != self._cells else -1 for pt in pti]
             points = [(w, h) for h, w in zip(row_anchors, to_pts)]
+            c = color[i]
             for l in points:
                 if l[0] == -1:
                     continue
-                cv2.circle(img, l, radius=3, color=(0,0,255), thickness=3)
+                cv2.circle(img, l, radius=3, color=c, thickness=3)
         if show:
             cv2.imshow('img', img)
             cv2.waitKey()

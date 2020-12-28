@@ -8,8 +8,7 @@ from losses import discriminative
 import traceback
 import sys
 import time
-import matplotlib.pyplot as plt
-from lanenet.evaluate import lanenet_evalute
+from util.evaluate import evalute
 import numpy as np
 import cv2
 from lanenet.data_pipe import data_pipe
@@ -45,8 +44,8 @@ class lanenet_train(object):
             #train
             [src_queue, binary_queue, instance_queue] = data_handle.make_pipe(config['image_path'], config['batch_size'])
             binary_logits, embedding_logits = lannet_net.build_net(src_queue, config['batch_size'], config['l2_weight_decay'], skip=config['skip'])
-            binary_acc = lanenet_evalute.accuracy(binary_queue, binary_logits)
-            binary_fn = lanenet_evalute.fn(binary_queue, binary_logits)
+            binary_acc = evalute.accuracy(binary_queue, binary_logits)
+            binary_fn = evalute.fn(binary_queue, binary_logits)
 
             feature_dim = instance_queue.get_shape().as_list()
             instance_queue = tf.reshape(instance_queue, [config['batch_size'], feature_dim[1], feature_dim[2]])
