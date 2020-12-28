@@ -80,6 +80,7 @@ class ultra_lane():
             predict_label = tf.cast(tf.reshape(cls_queue, (b, w, h)), dtype=lane_row_anchors_tensor.dtype)
             correct_label = tf.cast(tf.equal(predict_label, lane_row_anchors_tensor), dtype=tf.float32)
             precision = tf.reduce_sum(correct_label) / (1.0*w*h*b*c)
+            precision_summary = tf.summary.scalar(name='precives', tensor=precision)
 
             global_step = tf.train.create_global_step()
             learning_rate = tf.train.exponential_decay(config['learning_rate'], global_step, config['num_epochs_before_decay'], config['decay_rate'])
@@ -97,7 +98,7 @@ class ultra_lane():
             val_total_loss_summary = tf.summary.scalar(name='val-total-loss', tensor=valid_total_loss_tensor)
             val_cls_loss_summary = tf.summary.scalar(name='val-cls-loss', tensor=valid_cls_loss_tensor)
 
-            train_summary_op = tf.summary.merge([total_loss_summary, cls_loss_summary, ls_summary, val_total_loss_summary, val_cls_loss_summary])
+            train_summary_op = tf.summary.merge([total_loss_summary, cls_loss_summary, ls_summary, val_total_loss_summary, val_cls_loss_summary, precision_summary])
 
             #saver = tf.train.Saver()
             with tf.Session(config=tf.ConfigProto(log_device_placement=config['device_log'])) as sess:
