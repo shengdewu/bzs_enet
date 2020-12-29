@@ -7,6 +7,7 @@ import tusimple_process.ultranet_comm
 import cv2
 from ultra_lane.similarity_loss import similaryit_loss
 from ultra_lane.similarity_loss import structural_loss
+from ultra_lane.similarity_loss import cls_loss
 import logging
 import numpy as np
 from tusimple_process.create_label import tusimple_label
@@ -38,21 +39,7 @@ class ultra_lane():
         return group_cls
 
     def loss(self, group_cls, label):
-        bs, ws, hs, cs = label.get_shape().as_list()
-
-        scores = tf.nn.softmax(group_cls, axis=3)
-        factor = tf.pow(1.-scores, 2)
-        log_score = tf.nn.log_softmax(group_cls, axis=3)
-        log_score = factor * log_score
-
-        label = tf.reshape(label, (bs, ws, hs))
-        label_oh = tf.one_hot(label, self._cells+1)
-        nllloss1 = tf.multiply(label_oh, log_score)
-        nllloss2 = tf.abs(nllloss1)
-        index = tf.where(nllloss2 > 0)
-        nllloss3 = tf.gather_nd(nllloss2, index)
-
-        cls = tf.reduce_mean(nllloss3)
+        cls = cls_loss(group_cls, label, self._cells)
 
         sim = similaryit_loss(group_cls)
 
